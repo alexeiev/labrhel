@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RHCE - Answers</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        #app-container {
+            display: flex;
+            height: 100%;
+        }
+        #sidebar {
+            width: 220px;
+            min-width: 220px;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+        #sidebar h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #555;
+            padding-bottom: 10px;
+        }
+        #sidebar select, #sidebar button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: none;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #sidebar button:hover {
+            background-color: #666;
+        }
+        #main-content {
+            flex-grow: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        .answer-block {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 25px;
+            border: 1px solid #ddd;
+        }
+        .answer-block h2 {
+            margin-top: 0;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            font-size: 18px;
+            color: #333;
+        }
+        .answer-block h3 {
+            color: #555;
+            font-size: 14px;
+            margin-top: 18px;
+            margin-bottom: 6px;
+        }
+        .answer-block pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .enunciado {
+            background-color: #f0f4f8;
+            border-left: 4px solid #007bff;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .page-header h1 {
+            margin: 0;
+            font-size: 22px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <div id="sidebar">
+            <h2>RHCE - EX294</h2>
+            <h2 style="margin-top: 20px;">Idioma</h2>
+            <select id="languageSelect">
+                <option value="pt">Portugues</option>
+                <option value="en">English</option>
+            </select>
+            <button style="margin-top: 30px; background-color: #007bff;" onclick="window.location.href='index.html'">Voltar ao Lab</button>
+        </div>
+        <div id="main-content">
+        </div>
+    </div>
+
+    <script>
+        const mainContentDiv = document.getElementById('main-content');
+        const languageSelect = document.getElementById('languageSelect');
+
+        const answers = [
+            {
+                title: {
+                    pt: '1. Instale e configure o Ansible no no de controle',
+                    en: '1. Install and Configure Ansible on the control node'
+                },
+                enunciado: {
+                    pt: 'Instale os pacotes necessarios, crie um arquivo de inventario estatico e configure o ansible.cfg no no de controle.',
+                    en: 'Install the required packages, create a static inventory file, and configure ansible.cfg on the control node.'
+                },
+                sections: [
+                    { label: 'Commands', code: `sudo yum -y install ansible-core ansible-navigator\nmkdir -p /home/greg/ansible/roles\nmkdir -p /home/greg/ansible/mycollection\ncd /home/greg/ansible/` },
+                    { label: { pt: 'Inventario: /home/greg/ansible/inventory', en: 'Inventory: /home/greg/ansible/inventory' }, code: `[dev]\nnode1\n\n[test]\nnode2\n\n[prod]\nnode3\nnode4\n\n[balancers]\nnode5\n\n[webservers:children]\nprod` },
+                    { label: { pt: 'Configuracao: /home/greg/ansible/ansible.cfg', en: 'Configuration: /home/greg/ansible/ansible.cfg' }, code: `[defaults]\ninventory = /home/greg/ansible/inventory\nremote_user = greg\nhost_key_checking = False\nroles_path = /home/greg/ansible/roles\ncollections_path = /home/greg/ansible/mycollection\n\n[privilege_escalation]\nbecome = True` },
+                    { label: { pt: 'Validar', en: 'Validate' }, code: `ansible --version\nansible all -m ping` }
+                ]
+            },
+            {
+                title: {
+                    pt: '2. Configurar repositorios YUM (yum_repo.yml)',
+                    en: '2. Configure YUM Repositories (yum_repo.yml)'
+                },
+                enunciado: {
+                    pt: 'Crie yum_repo.yml para configurar os repositorios EX294_BASE e EX294_STREAM em todos os nos. GPG esta desativado no lab (ativado na prova).',
+                    en: 'Create yum_repo.yml to configure EX294_BASE and EX294_STREAM repositories on all nodes. GPG is disabled for the lab (enabled in the real exam).'
+                },
+                sections: [
+                    { label: 'Playbook: /home/greg/ansible/yum_repo.yml', code: `---\n- name: Configure YUM repositories\n  hosts: all\n  tasks:\n    - name: Configure EX294_BASE repository\n      yum_repository:\n        file: EX294_BASE\n        name: EX294_BASE\n        description: "EX294 base software"\n        baseurl: http://content.example.com/repos/rhel9/BaseOS\n        gpgcheck: no\n        enabled: yes\n\n    - name: Configure EX294_STREAM repository\n      yum_repository:\n        file: EX294_STREAM\n        name: EX294_STREAM\n        description: "EX294 stream software"\n        baseurl: http://content/rhel9.0/x86_64/dvd/AppStream\n        gpgcheck: no\n        enabled: yes` },
+                    { label: { pt: 'Executar', en: 'Execute' }, code: `ansible-navigator run yum_repo.yml -m stdout` }
+                ]
+            },
+            {
+                title: {
+                    pt: '3. Instalar pacotes (packages.yml)',
+                    en: '3. Install Packages (packages.yml)'
+                },
+                enunciado: {
+                    pt: 'Instale php e mariadb em dev, test e prod. Instale "RPM Development Tools" em dev. Atualize todos os pacotes em dev. Use uma acao separada para cada tarefa.',
+                    en: 'Install php and mariadb on dev, test and prod. Install "RPM Development Tools" on dev. Update all packages on dev. Use a separate play for each task.'
+                },
+                sections: [
+                    { label: 'Playbook: /home/greg/ansible/packages.yml', code: `---\n- name: Install php and mariadb\n  hosts: dev,test,prod\n  tasks:\n    - name: Install required packages\n      yum:\n        name:\n          - php\n          - mariadb\n        state: present\n\n- name: Install RPM Development Tools\n  hosts: dev\n  tasks:\n    - name: Install RPM Development Tools group\n      yum:\n        name: "@RPM Development Tools"\n        state: present\n\n- name: Update all packages\n  hosts: dev\n  tasks:\n    - name: Upgrade all packages to the latest version\n      yum:\n        name: "*"\n        state: latest` },
+                    { label: { pt: 'Executar', en: 'Execute' }, code: `ansible-navigator run packages.yml -m stdout` }
+                ]
+            },
+            {
+                title: {
+                    pt: '4. Usar role de sistema RHEL SELinux (selinux.yml)',
+                    en: '4. Use RHEL SELinux System Role (selinux.yml)'
+                },
+                enunciado: {
+                    pt: 'Crie um playbook que execute em todos os nos gerenciados, use a role selinux com politica targeted e estado enforcing.',
+                    en: 'Create a playbook that runs on all managed nodes, uses the selinux role with policy targeted and state enforcing.'
+                },
+                sections: [
+                    { label: 'Playbook: /home/greg/ansible/selinux.yml', code: `---\n- name: Configure SELinux\n  hosts: all\n  become: true\n  vars:\n    selinux_policy: targeted\n    selinux_state: enforcing\n  tasks:\n    - name: Apply SELinux role\n      block:\n        - name: Include selinux role\n          include_role:\n            name: rhel-system-roles.selinux\n      rescue:\n        - name: Fail if reboot not required\n          fail:\n            msg: "SELinux role failed"\n          when: not selinux_reboot_required\n\n        - name: Reboot managed host\n          reboot:\n\n        - name: Wait for managed host to come back\n          wait_for_connection:\n            delay: 10\n            timeout: 300\n\n        - name: Reapply the role\n          include_role:\n            name: rhel-system-roles.selinux` },
+                    { label: { pt: 'Executar', en: 'Execute' }, code: `ansible-navigator run selinux.yml -m stdout` }
+                ]
+            },
+            {
+                title: {
+                    pt: '5. Instalar Colecoes de Conteudo Ansible',
+                    en: '5. Install Ansible Content Collections'
+                },
+                enunciado: {
+                    pt: 'Instale as colecoes a partir das URLs fornecidas no diretorio /home/greg/ansible/mycollection.',
+                    en: 'Install the collections from the provided URLs into /home/greg/ansible/mycollection.'
+                },
+                sections: [
+                    { label: 'Requirements: /home/greg/ansible/requirements.yml', code: `---\ncollections:\n  - name: http://classroom/materials/redhat-insights-1.0.7.tar.gz\n  - name: http://classroom/materials/community-general-5.5.0.tar.gz\n  - name: http://classroom/materials/redhat-rhel_system_roles-1.19.3.tar.gz` },
+                    { label: { pt: 'Instalar', en: 'Install' }, code: `ansible-galaxy collection install -r requirements.yml -p /home/greg/ansible/mycollection` }
+                ]
+            },
+            {
+                title: {
+                    pt: '6. Instalar roles usando Ansible Galaxy',
+                    en: '6. Install Roles using Ansible Galaxy'
+                },
+                enunciado: {
+                    pt: 'Crie um diretorio roles e um arquivo requirements.yml para baixar as roles balancer e phpinfo.',
+                    en: 'Create a roles directory and a requirements.yml file to download the balancer and phpinfo roles.'
+                },
+                sections: [
+                    { label: 'Requirements: /home/greg/ansible/roles/requirements.yml', code: `---\n- src: http://classroom/materials/haproxy.tar\n  name: balancer\n\n- src: http://classroom/materials/phpinfo.tar\n  name: phpinfo` },
+                    { label: { pt: 'Instalar', en: 'Install' }, code: `ansible-galaxy install -r /home/greg/ansible/roles/requirements.yml -p /home/greg/ansible/roles` }
+                ]
+            },
+            {
+                title: {
+                    pt: '7. Criar role Apache',
+                    en: '7. Create Apache Role'
+                },
+                enunciado: {
+                    pt: 'Crie uma role offline chamada apache: instale httpd, ative firewalld com HTTP, hospede uma pagina web usando template Jinja2.',
+                    en: 'Create an offline role named apache: install httpd, enable firewalld with HTTP, host a web page using a Jinja2 template.'
+                },
+                sections: [
+                    { label: { pt: 'Criar estrutura da role', en: 'Create role structure' }, code: `ansible-galaxy init /home/greg/ansible/roles/apache` },
+                    { label: 'Tasks: /home/greg/ansible/roles/apache/tasks/main.yml', code: `---\n- name: Install httpd\n  yum:\n    name: httpd\n    state: latest\n\n- name: Start and enable httpd\n  systemd:\n    name: httpd\n    state: started\n    enabled: yes\n\n- name: Start and enable firewalld\n  systemd:\n    name: firewalld\n    state: started\n    enabled: yes\n\n- name: Allow HTTP through firewall\n  firewalld:\n    service: http\n    permanent: yes\n    state: enabled\n    immediate: yes\n\n- name: Deploy index.html from template\n  template:\n    src: index.html.j2\n    dest: /var/www/html/index.html` },
+                    { label: 'Template: /home/greg/ansible/roles/apache/templates/index.html.j2', code: `Welcome to {{ ansible_fqdn }} on {{ ansible_default_ipv4.address }}` },
+                    { label: 'Playbook: /home/greg/ansible/apache.yml', code: `---\n- name: Deploy Apache role\n  hosts: webservers\n  roles:\n    - apache` },
+                    { label: { pt: 'Executar', en: 'Execute' }, code: `ansible-navigator run apache.yml -m stdout` }
+                ]
+            },
+            {
+                title: {
+                    pt: '8. Usar roles balancer e phpinfo (roles.yml)',
+                    en: '8. Use Balancer and PHPInfo Roles (roles.yml)'
+                },
+                enunciado: {
+                    pt: 'Crie roles.yml para executar a role phpinfo nos webservers e a role balancer no grupo balancers.',
+                    en: 'Create roles.yml to run the phpinfo role on webservers and the balancer role on balancers group.'
+                },
+                sections: [
+                    { label: 'Playbook: /home/greg/ansible/roles.yml', code: `---\n- name: Use phpinfo role\n  hosts: webservers\n  roles:\n    - phpinfo\n\n- name: Use balancer role\n  hosts: balancers\n  roles:\n    - balancer` },
+                    { label: { pt: 'Executar', en: 'Execute' }, code: `ansible-navigator run roles.yml -m stdout` },
+                    { label: { pt: 'Validar', en: 'Validate' }, code: `curl http://node5.lab.example.com\n# Should alternate between node3 and node4\n\ncurl http://node3.lab.example.com/hello.php\n# Hello PHP World from node3.lab.example.com\n\ncurl http://node4.lab.example.com/hello.php\n# Hello PHP World from node4.lab.example.com` }
+                ]
+            },
+            {
+                title: {
+                    pt: '9. Criar e usar Volume Logico (lv.yml)',
+                    en: '9. Create and Use Logical Volume (lv.yml)'
+                },
+                enunciado: {
+                    pt: 'Crie um volume logico "data" no grupo de volume "research" com 1500 MiB (fallback para 800 MiB). Formate com ext4. Trate VG inexistente.',
+                    en: 'Create a logical volume "data" in volume group "research" with 1500 MiB (fallback to 800 MiB). Format with ext4. Handle missing VG.'
+                },
+                sections: [
+                    { label: 'Playbook: /home/greg/ansible/lv.yml', code: `---\n- name: Create Logical Volume\n  hosts: all\n  tasks:\n    - block:\n        - name: Create LV with 1500 MiB\n          community.general.lvol:\n            vg: research\n            lv: data\n            size: 1500\n\n        - name: Format with ext4\n          community.general.filesystem:\n            fstype: ext4\n            dev: /dev/research/data\n\n      rescue:\n        - name: Display size error\n          ansible.builtin.debug:\n            msg: Could not create logical volume of that size\n\n        - name: Create LV with 800 MiB\n          community.general.lvol:\n            vg: research\n            lv: data\n            size: 800\n\n        - name: Format with ext4\n          community.general.filesystem:\n            fstype: ext4\n            dev: /dev/research/data\n\n      when: ansible_lvm.vgs.research is defined\n\n    - name: Display VG error\n      ansible.builtin.debug:\n        msg: Volume group does not exist\n      when: ansible_lvm.vgs.research is not defined` },
+                    { label: { pt: 'Executar', en: 'Execute' }, code: `ansible-navigator run lv.yml -m stdout` }
+                ]
+            },
+            {
+                title: {
+                    pt: '10. Gerar arquivo hosts a partir de template (hosts.yml)',
+                    en: '10. Generate Hosts File from Template (hosts.yml)'
+                },
+                enunciado: {
+                    pt: 'Baixe o template hosts.j2. Crie um playbook que gere /etc/myhosts no grupo dev com as informacoes de todos os hosts do inventario.',
+                    en: 'Download the hosts.j2 template. Create a playbook that generates /etc/myhosts on the dev group with all inventory host information.'
+                },
+                sections: [
+                    { label: 'Download template', code: `wget http://content.example.com/materials/hosts.j2 -O /home/greg/ansible/hosts.j2` },
+                    { label: 'Template: /home/greg/ansible/hosts.j2', code: `127.0.0.1   materials.example.com workstation.lab.example.com exam.example.com localhost localhost.localdomain localhost4 localhost4.localdomain4\n::1         localhost localhost.localdomain localhost6 localhost6.localdomain6\n\n{% for host in groups['all'] %}\n{{ hostvars[host].ansible_default_ipv4.address }} {{ hostvars[host].ansible_fqdn }} {{ host }}\n{% endfor %}` },
+                    { label: 'Playbook: /home/greg/ansible/hosts.yml', code: `---\n- name: Gather facts from all hosts\n  hosts: all\n\n- name: Generate /etc/myhosts on dev group\n  hosts: dev\n  tasks:\n    - name: Deploy hosts file from template\n      template:\n        src: /home/greg/ansible/hosts.j2\n        dest: /etc/myhosts` },
+                    { label: { pt: 'Executar', en: 'Execute' }, code: `ansible-navigator run hosts.yml -m stdout` }
+                ]
+            },
+            {
+                title: {
+                    pt: '11. Substituir /etc/issue (issue.yml)',
+                    en: '11. Replace /etc/issue (issue.yml)'
+                },
+                enunciado: {
+                    pt: 'Substitua /etc/issue com "Development" em dev, "Test" em test e "Production" em prod.',
+                    en: 'Replace /etc/issue with "Development" on dev, "Test" on test, and "Production" on prod.'
+                },
+                sections: [
+                    { label: 'Playbook: /home/greg/ansible/issue.yml', code: `---\n- name: Modify /etc/issue\n  hosts: all\n  tasks:\n    - name: Set content for dev\n      ansible.builtin.copy:\n        content: "Development"\n        dest: /etc/issue\n      when: inventory_hostname in groups.dev\n\n    - name: Set content for test\n      ansible.builtin.copy:\n        content: "Test"\n        dest: /etc/issue\n      when: inventory_hostname in groups.test\n\n    - name: Set content for prod\n      ansible.builtin.copy:\n        content: "Production"\n        dest: /etc/issue\n      when: inventory_hostname in groups.prod` },
+                    { label: { pt: 'Executar', en: 'Execute' }, code: `ansible-navigator run issue.yml -m stdout` }
+                ]
+            },
+            {
+                title: {
+                    pt: '12. Conteudo Web (webcontent.yml)',
+                    en: '12. Web Content Directory (webcontent.yml)'
+                },
+                enunciado: {
+                    pt: 'Crie o diretorio /webdev pertencente ao grupo webdev com set-gid, crie index.html com "Development" e crie symlink para /var/www/html/webdev.',
+                    en: 'Create /webdev directory owned by webdev group with set-gid, create index.html with "Development", and symlink to /var/www/html/webdev.'
+                },
+                sections: [
+                    { label: 'Playbook: /home/greg/ansible/webcontent.yml', code: `---\n- name: Create Web Content Directory\n  hosts: dev\n  tasks:\n    - name: Create /webdev directory\n      ansible.builtin.file:\n        path: /webdev\n        state: directory\n        group: webdev\n        mode: '2775'\n\n    - name: Set SELinux context for /webdev\n      community.general.sefcontext:\n        target: '/webdev(/.*)?'\n        setype: httpd_sys_content_t\n        state: present\n\n    - name: Apply SELinux context\n      ansible.builtin.command: restorecon -Rv /webdev\n\n    - name: Create index.html\n      ansible.builtin.copy:\n        content: "Development"\n        dest: /webdev/index.html\n        setype: httpd_sys_content_t\n\n    - name: Create symbolic link\n      ansible.builtin.file:\n        src: /webdev\n        dest: /var/www/html/webdev\n        state: link` },
+                    { label: { pt: 'Executar', en: 'Execute' }, code: `ansible-navigator run webcontent.yml -m stdout` }
+                ]
+            },
+            {
+                title: {
+                    pt: '13. Relatorio de Hardware (hwreport.yml)',
+                    en: '13. Hardware Report (hwreport.yml)'
+                },
+                enunciado: {
+                    pt: 'Baixe hwreport.empty, salve como /root/hwreport.txt e preencha HOST, MEMORY, BIOS, DISK_SIZE_VDA, DISK_SIZE_VDB. Mostre "NONE" se a informacao nao existir.',
+                    en: 'Download hwreport.empty, save as /root/hwreport.txt, and fill in HOST, MEMORY, BIOS, DISK_SIZE_VDA, DISK_SIZE_VDB. Show "NONE" if info is missing.'
+                },
+                sections: [
+                    { label: 'Playbook: /home/greg/ansible/hwreport.yml', code: `---\n- name: Generate hardware report\n  hosts: all\n  tasks:\n    - name: Download empty report template\n      ansible.builtin.get_url:\n        url: http://content.example.com/materials/hwreport.empty\n        dest: /root/hwreport.txt\n\n    - name: Set HOST\n      ansible.builtin.lineinfile:\n        path: /root/hwreport.txt\n        regexp: '^HOST='\n        line: "HOST={{ inventory_hostname }}"\n\n    - name: Set MEMORY\n      ansible.builtin.lineinfile:\n        path: /root/hwreport.txt\n        regexp: '^MEMORY='\n        line: "MEMORY={{ ansible_memtotal_mb | default('NONE', true) }}"\n\n    - name: Set BIOS\n      ansible.builtin.lineinfile:\n        path: /root/hwreport.txt\n        regexp: '^BIOS='\n        line: "BIOS={{ ansible_bios_version | default('NONE', true) }}"\n\n    - name: Set DISK_SIZE_VDA\n      ansible.builtin.lineinfile:\n        path: /root/hwreport.txt\n        regexp: '^DISK_SIZE_VDA='\n        line: "DISK_SIZE_VDA={{ ansible_devices.vda.size | default('NONE', true) }}"\n\n    - name: Set DISK_SIZE_VDB\n      ansible.builtin.lineinfile:\n        path: /root/hwreport.txt\n        regexp: '^DISK_SIZE_VDB='\n        line: "DISK_SIZE_VDB={{ ansible_devices.vdb.size | default('NONE', true) }}"` },
+                    { label: { pt: 'Executar', en: 'Execute' }, code: `ansible-navigator run hwreport.yml -m stdout` }
+                ]
+            },
+            {
+                title: {
+                    pt: '14. Criar Vault (locker.yml)',
+                    en: '14. Create Vault (locker.yml)'
+                },
+                enunciado: {
+                    pt: 'Crie um arquivo de variaveis criptografado locker.yml com pw_developer e pw_manager. Armazene a senha do vault em secret.txt.',
+                    en: 'Create an encrypted variable file locker.yml with pw_developer and pw_manager. Store the vault password in secret.txt.'
+                },
+                sections: [
+                    { label: { pt: 'Armazenar a senha do vault', en: 'Store the vault password' }, code: `echo "whenyouwlshuponastar" > /home/greg/ansible/secret.txt` },
+                    { label: { pt: 'Adicionar ao ansible.cfg', en: 'Add to ansible.cfg' }, code: `[defaults]\nvault_password_file = /home/greg/ansible/secret.txt` },
+                    { label: { pt: 'Criar o arquivo vault', en: 'Create the vault file' }, code: `ansible-vault create /home/greg/ansible/locker.yml` },
+                    { label: { pt: 'Conteudo do locker.yml', en: 'Content of locker.yml' }, code: `---\npw_developer: Imadev\npw_manager: Imamgr` },
+                    { label: { pt: 'Validar', en: 'Validate' }, code: `ansible-vault view /home/greg/ansible/locker.yml` }
+                ]
+            },
+            {
+                title: {
+                    pt: '15. Criar contas de usuario (users.yml)',
+                    en: '15. Create User Accounts (users.yml)'
+                },
+                enunciado: {
+                    pt: 'Baixe user_list.yml. Crie usuarios: developers no grupo devops em dev/test, managers no grupo opsmgr em prod. Senha SHA512, expiracao maxima de 30 dias.',
+                    en: 'Download user_list.yml. Create users: developers in devops group on dev/test, managers in opsmgr group on prod. SHA512 password, 30 days max expiry.'
+                },
+                sections: [
+                    { label: { pt: 'Baixar arquivo de variaveis', en: 'Download variable file' }, code: `wget http://content.example.com/materials/user_list.yml -O /home/greg/ansible/user_list.yml` },
+                    { label: 'Playbook: /home/greg/ansible/users.yml', code: `---\n- name: Create developer users\n  hosts: dev,test\n  vars_files:\n    - /home/greg/ansible/locker.yml\n    - /home/greg/ansible/user_list.yml\n  tasks:\n    - name: Create devops group\n      group:\n        name: devops\n        state: present\n\n    - name: Create developer users\n      user:\n        name: "{{ item.name }}"\n        groups: devops\n        password: "{{ pw_developer | password_hash('sha512') }}"\n        password_expire_max: 30\n      loop: "{{ users }}"\n      when: item.job == 'developer'\n\n- name: Create manager users\n  hosts: prod\n  vars_files:\n    - /home/greg/ansible/locker.yml\n    - /home/greg/ansible/user_list.yml\n  tasks:\n    - name: Create opsmgr group\n      group:\n        name: opsmgr\n        state: present\n\n    - name: Create manager users\n      user:\n        name: "{{ item.name }}"\n        groups: opsmgr\n        password: "{{ pw_manager | password_hash('sha512') }}"\n        password_expire_max: 30\n      loop: "{{ users }}"\n      when: item.job == 'manager'` },
+                    { label: { pt: 'Executar', en: 'Execute' }, code: `ansible-navigator run users.yml -m stdout` }
+                ]
+            },
+            {
+                title: {
+                    pt: '16. Recriar chave do vault (salaries.yml)',
+                    en: '16. Rekey Vault File (salaries.yml)'
+                },
+                enunciado: {
+                    pt: 'Baixe salaries.yml e altere a chave com uma nova senha. O arquivo deve permanecer criptografado.',
+                    en: 'Download salaries.yml and rekey it with a new password. The file must remain encrypted.'
+                },
+                sections: [
+                    { label: 'Download and rekey', code: `wget http://classroom/materials/salaries.yml -O /home/greg/ansible/salaries.yml\n\nansible-vault rekey --ask-vault-pass /home/greg/ansible/salaries.yml\n# Old password: insecure4sure\n# New password: bbe2de98389b` },
+                    { label: { pt: 'Validar', en: 'Validate' }, code: `ansible-vault view /home/greg/ansible/salaries.yml --ask-vault-pass\n# Use the new password: bbe2de98389b` }
+                ]
+            },
+            {
+                title: {
+                    pt: '17. Criar Cron Job (cron.yml)',
+                    en: '17. Create Cron Job (cron.yml)'
+                },
+                enunciado: {
+                    pt: 'Crie um cron job para o usuario natasha nos nos do grupo dev. A cada 2 minutos execute: logger "EX294 in progress".',
+                    en: 'Create a cron job for user natasha on dev group nodes. Every 2 minutes execute: logger "EX294 in progress".'
+                },
+                sections: [
+                    { label: 'Playbook: /home/greg/ansible/cron.yml', code: `---\n- name: Configure cron job\n  hosts: dev\n  tasks:\n    - name: Create cron job for natasha\n      cron:\n        name: "EX294 logger"\n        minute: "*/2"\n        job: 'logger "EX294 in progress"'\n        user: natasha` },
+                    { label: { pt: 'Executar', en: 'Execute' }, code: `ansible-navigator run cron.yml -m stdout` }
+                ]
+            }
+        ];
+
+        function getLabel(label, lang) {
+            if (typeof label === 'string') return label;
+            return label[lang] || label['en'];
+        }
+
+        function render() {
+            const lang = languageSelect.value;
+            mainContentDiv.innerHTML = '';
+
+            const header = document.createElement('div');
+            header.className = 'page-header';
+            const h1 = document.createElement('h1');
+            h1.textContent = lang === 'pt' ? 'RHCE (EX294) - Respostas' : 'RHCE (EX294) - Answers';
+            header.appendChild(h1);
+            mainContentDiv.appendChild(header);
+
+            answers.forEach(q => {
+                const block = document.createElement('div');
+                block.className = 'answer-block';
+
+                const title = document.createElement('h2');
+                title.textContent = getLabel(q.title, lang);
+                block.appendChild(title);
+
+                const enunciado = document.createElement('div');
+                enunciado.className = 'enunciado';
+                enunciado.textContent = getLabel(q.enunciado, lang);
+                block.appendChild(enunciado);
+
+                q.sections.forEach(section => {
+                    const h3 = document.createElement('h3');
+                    h3.textContent = getLabel(section.label, lang);
+                    block.appendChild(h3);
+
+                    const pre = document.createElement('pre');
+                    pre.textContent = section.code;
+                    block.appendChild(pre);
+                });
+
+                mainContentDiv.appendChild(block);
+            });
+        }
+
+        const urlLang = new URLSearchParams(window.location.search).get('lang');
+        if (urlLang && (urlLang === 'pt' || urlLang === 'en')) {
+            languageSelect.value = urlLang;
+        }
+
+        languageSelect.addEventListener('change', render);
+        render();
+    </script>
+</body>
+</html>

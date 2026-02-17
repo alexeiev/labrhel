@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red Hat Lab</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        #app-container {
+            display: flex;
+            height: 100%;
+        }
+        #sidebar {
+            width: 220px;
+            min-width: 220px;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+        #sidebar h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #555;
+            padding-bottom: 10px;
+        }
+        #sidebar select, #sidebar button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: none;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #sidebar button:hover {
+            background-color: #666;
+        }
+        #sidebar select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #main-content {
+            flex-grow: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        /* Landing screen */
+        .landing-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+        }
+        .landing-screen h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .landing-screen p {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 40px;
+        }
+        .exam-cards {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .exam-card {
+            background-color: #fff;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 30px 40px;
+            cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            min-width: 180px;
+        }
+        .exam-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 4px 12px rgba(0,123,255,0.2);
+        }
+        .exam-card.disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        .exam-card.disabled:hover {
+            border-color: #ddd;
+            box-shadow: none;
+        }
+        .exam-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 22px;
+            color: #333;
+        }
+        .exam-card span {
+            font-size: 14px;
+            color: #888;
+        }
+        .exam-card .badge-soon {
+            display: inline-block;
+            background-color: #ffc107;
+            color: #333;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-top: 8px;
+        }
+
+        /* Question list */
+        .question-list-container {
+            width: 100%;
+        }
+        .question-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .question-list-header h1 {
+            margin: 0;
+            font-size: 22px;
+            color: #333;
+        }
+        .question-list-header button {
+            padding: 8px 18px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .question-list-header button:hover {
+            background-color: #5a6268;
+        }
+        .question-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .question-item a {
+            flex-grow: 1;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .question-item a:hover {
+            text-decoration: underline;
+        }
+        .status-radios {
+            flex-shrink: 0;
+            margin-left: 20px;
+            display: flex;
+            gap: 15px;
+        }
+        .status-radios label {
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #question-detail-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        #question-detail-container h2 {
+            margin-top: 0;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        #question-detail-container pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        #back-to-home-bottom {
+            display: none;
+            margin-top: 20px;
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #back-to-home-bottom:hover {
+            background-color: #0056b3;
+        }
+        #timer-section {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #555;
+        }
+        #timerDisplay {
+            display: block;
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+        #timerDisplay.expired {
+            color: #ff4444;
+        }
+        #timer-section .timer-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        #timer-section button {
+            flex: 1;
+            margin-top: 0;
+        }
+        .loading-msg {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 18px;
+        }
+        .error-msg {
+            text-align: center;
+            padding: 40px;
+            color: #cc0000;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <div id="sidebar">
+            <div id="timer-section">
+                <h2>Contador</h2>
+                <span id="timerDisplay">04:00:00</span>
+                <div class="timer-buttons">
+                    <button id="startButton">Start</button>
+                    <button id="resetButton">Zerar</button>
+                </div>
+            </div>
+            <h2 style="margin-top: 20px;">Exame</h2>
+            <select id="examSelect">
+                <option value="">-- Escolha --</option>
+                <option value="rhcsa">RHCSA</option>
+                <option value="rhce">RHCE</option>
+            </select>
+            <h2 style="margin-top: 20px;">Idioma</h2>
+            <select id="languageSelect">
+                <option value="pt">Portugues</option>
+                <option value="en">English</option>
+            </select>
+            <button id="answersButton" style="margin-top: 30px; background-color: #007bff;" onclick="openAnswers()">Respostas</button>
+        </div>
+        <div id="main-content">
+        </div>
+    </div>
+
+    <script>
+        const mainContentDiv = document.getElementById('main-content');
+        const examSelect = document.getElementById('examSelect');
+        const languageSelect = document.getElementById('languageSelect');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const startButton = document.getElementById('startButton');
+        const resetButton = document.getElementById('resetButton');
+
+        let questions = [];
+        let currentLang = 'pt';
+        let currentExam = '';
+        let timerInterval;
+        const EXAM_DURATION = {
+            'rhcsa': 3 * 60 * 60,
+            'rhce': 4 * 60 * 60
+        };
+        const DEFAULT_SECONDS = 4 * 60 * 60;
+        let totalSeconds = DEFAULT_SECONDS;
+        let isRunning = false;
+        // questionStatuses keyed by exam, e.g. { 'rhce-v1': { 1: 'completed' } }
+        let questionStatuses = {};
+        const contentCache = {};
+
+        const FILE_MAP = {
+            'rhcsa': { pt: 'RHCSA_PT.md', en: 'RHCSA_EN.md' },
+            'rhce': { pt: 'RHCE_PT.md', en: 'RHCE_EN.md' }
+        };
+
+        const EXAM_LABELS = {
+            'rhcsa': 'RHCSA',
+            'rhce': 'RHCE'
+        };
+
+        function renderLanding() {
+            currentExam = '';
+            examSelect.value = '';
+            mainContentDiv.innerHTML = '';
+
+            const landing = document.createElement('div');
+            landing.className = 'landing-screen';
+
+            const h1 = document.createElement('h1');
+            h1.textContent = 'Red Hat Certification Lab';
+
+            const subtitle = document.createElement('p');
+            subtitle.textContent = currentLang === 'pt'
+                ? 'Laboratorio de estudos para certificacoes da Red Hat. Escolha o exame:'
+                : 'Study lab for Red Hat certifications. Choose the exam:';
+
+            const cards = document.createElement('div');
+            cards.className = 'exam-cards';
+
+            const exams = [
+                { id: 'rhcsa', label: 'RHCSA', desc: 'EX200' },
+                { id: 'rhce', label: 'RHCE', desc: 'EX294' }
+            ];
+
+            exams.forEach(exam => {
+                const card = document.createElement('div');
+                card.className = 'exam-card' + (exam.soon ? ' disabled' : '');
+
+                const title = document.createElement('h3');
+                title.textContent = exam.label;
+
+                const desc = document.createElement('span');
+                desc.textContent = exam.desc;
+
+                card.appendChild(title);
+                card.appendChild(desc);
+
+                if (exam.soon) {
+                    const badge = document.createElement('div');
+                    badge.className = 'badge-soon';
+                    badge.textContent = currentLang === 'pt' ? 'Em breve' : 'Coming soon';
+                    card.appendChild(badge);
+                } else {
+                    card.addEventListener('click', () => {
+                        currentExam = exam.id;
+                        examSelect.value = exam.id;
+                        loadAndRender();
+                    });
+                }
+
+                cards.appendChild(card);
+            });
+
+            landing.appendChild(h1);
+            landing.appendChild(subtitle);
+            landing.appendChild(cards);
+            mainContentDiv.appendChild(landing);
+        }
+
+        async function fetchContent(exam, lang) {
+            const key = `${exam}_${lang}`;
+            if (contentCache[key]) return contentCache[key];
+            const files = FILE_MAP[exam];
+            if (!files || !files[lang]) throw new Error('Exam not available');
+            const response = await fetch(files[lang]);
+            if (!response.ok) throw new Error(`Erro ao carregar ${files[lang]}`);
+            const text = await response.text();
+            contentCache[key] = text;
+            return text;
+        }
+
+        function parseQuestions(markdown) {
+            const content = markdown.split('## ').slice(1);
+            return content.map((block, index) => {
+                const lines = block.trim().split('\n');
+                const title = lines[0].trim();
+                const body = lines.slice(1).join('\n').trim();
+                return { id: index + 1, title, body };
+            });
+        }
+
+        function getStatuses() {
+            if (!questionStatuses[currentExam]) questionStatuses[currentExam] = {};
+            return questionStatuses[currentExam];
+        }
+
+        function renderQuestionList() {
+            mainContentDiv.innerHTML = '';
+
+            const container = document.createElement('div');
+            container.className = 'question-list-container';
+
+            const header = document.createElement('div');
+            header.className = 'question-list-header';
+
+            const headerTitle = document.createElement('h1');
+            headerTitle.textContent = EXAM_LABELS[currentExam] || currentExam;
+
+            const backToLanding = document.createElement('button');
+            backToLanding.textContent = currentLang === 'pt' ? 'Trocar exame' : 'Change exam';
+            backToLanding.addEventListener('click', renderLanding);
+
+            header.appendChild(headerTitle);
+            header.appendChild(backToLanding);
+            container.appendChild(header);
+
+            const statuses = getStatuses();
+
+            questions.forEach(q => {
+                const item = document.createElement('div');
+                item.className = 'question-item';
+
+                const link = document.createElement('a');
+                link.href = '#';
+                link.textContent = q.title;
+                link.onclick = (e) => {
+                    e.preventDefault();
+                    renderQuestionDetail(q.id);
+                };
+
+                const radios = document.createElement('div');
+                radios.className = 'status-radios';
+                const revisitLabel = currentLang === 'pt' ? 'Revisar' : 'Review';
+                const completedLabel = currentLang === 'pt' ? 'Completo' : 'Complete';
+
+                const savedStatus = statuses[q.id] || '';
+
+                radios.innerHTML = `
+                    <label><input type="radio" name="status-${q.id}" value="revisit" ${savedStatus === 'revisit' ? 'checked' : ''}> ${revisitLabel}</label>
+                    <label><input type="radio" name="status-${q.id}" value="completed" ${savedStatus === 'completed' ? 'checked' : ''}> ${completedLabel}</label>
+                `;
+
+                radios.querySelectorAll('input[type="radio"]').forEach(radio => {
+                    radio.addEventListener('change', (e) => {
+                        getStatuses()[q.id] = e.target.value;
+                    });
+                });
+
+                item.appendChild(link);
+                item.appendChild(radios);
+                container.appendChild(item);
+            });
+            mainContentDiv.appendChild(container);
+        }
+
+        function renderQuestionDetail(id) {
+            const question = questions.find(q => q.id === id);
+            if (!question) return;
+
+            mainContentDiv.innerHTML = '';
+
+            const container = document.createElement('div');
+            container.id = 'question-detail-container';
+
+            const title = document.createElement('h2');
+            title.textContent = question.title;
+
+            const body = document.createElement('pre');
+            body.textContent = question.body;
+
+            container.appendChild(title);
+            container.appendChild(body);
+
+            const backBtn = document.createElement('button');
+            backBtn.id = 'back-to-home-bottom';
+            backBtn.textContent = currentLang === 'pt' ? 'Voltar' : 'Back';
+            backBtn.style.display = 'inline-block';
+            backBtn.addEventListener('click', loadAndRender);
+
+            mainContentDiv.appendChild(container);
+            mainContentDiv.appendChild(backBtn);
+        }
+
+        let previousExam = '';
+
+        async function loadAndRender() {
+            currentLang = languageSelect.value;
+            currentExam = examSelect.value;
+
+            if (!currentExam) {
+                renderLanding();
+                return;
+            }
+
+            if (!FILE_MAP[currentExam]) {
+                renderLanding();
+                return;
+            }
+
+            if (currentExam !== previousExam) {
+                resetTimer();
+                previousExam = currentExam;
+            }
+
+            try {
+                mainContentDiv.innerHTML = '<div class="loading-msg">Carregando questoes...</div>';
+                const markdown = await fetchContent(currentExam, currentLang);
+                questions = parseQuestions(markdown);
+                renderQuestionList();
+            } catch (err) {
+                mainContentDiv.innerHTML = `<div class="error-msg">Erro ao carregar questoes: ${err.message}</div>`;
+            }
+        }
+
+        function formatTime(seconds) {
+            const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+            const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+
+        function updateTimerDisplay() {
+            timerDisplay.textContent = formatTime(totalSeconds);
+            if (totalSeconds <= 0) {
+                timerDisplay.classList.add('expired');
+            } else {
+                timerDisplay.classList.remove('expired');
+            }
+        }
+
+        function startTimer() {
+            if (!isRunning) {
+                if (totalSeconds <= 0) {
+                    totalSeconds = EXAM_DURATION[currentExam] || DEFAULT_SECONDS;
+                    updateTimerDisplay();
+                }
+                isRunning = true;
+                startButton.textContent = 'Pause';
+                timerInterval = setInterval(() => {
+                    totalSeconds--;
+                    updateTimerDisplay();
+                    if (totalSeconds <= 0) {
+                        clearInterval(timerInterval);
+                        isRunning = false;
+                        startButton.textContent = 'Start';
+                    }
+                }, 1000);
+            } else {
+                isRunning = false;
+                startButton.textContent = 'Start';
+                clearInterval(timerInterval);
+            }
+        }
+
+        function resetTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            totalSeconds = EXAM_DURATION[currentExam] || DEFAULT_SECONDS;
+            startButton.textContent = 'Start';
+            updateTimerDisplay();
+        }
+
+        const ANSWERS_MAP = {
+            'rhcsa': 'answers-rhcsa.html',
+            'rhce': 'answers-rhce.html'
+        };
+
+        function openAnswers() {
+            const page = ANSWERS_MAP[currentExam];
+            if (page) {
+                window.open(page + '?lang=' + currentLang, '_blank');
+            } else {
+                alert(currentLang === 'pt'
+                    ? 'Selecione um exame primeiro.'
+                    : 'Please select an exam first.');
+            }
+        }
+
+        examSelect.addEventListener('change', loadAndRender);
+        languageSelect.addEventListener('change', loadAndRender);
+        startButton.addEventListener('click', startTimer);
+        resetButton.addEventListener('click', resetTimer);
+
+        // Initial Load
+        renderLanding();
+        updateTimerDisplay();
+    </script>
+</body>
+</html>
