@@ -16,12 +16,12 @@
 ## 2. Crie yum_repo.yml para configurar o repositório em todos os nós.
 i) Nome = EX294_BASE
    Descrição = EX294 base software
-   URL = http://content.example.com/repos/rhel9/BaseOS
+   URL = http://content.example.com/rhel9/BaseOS
    GPG está desativado (na prova é ativado).
    Repositório está ativado.
 ii) Nome = EX294_STREAM
     Descrição = EX294 stream software
-    URL = http://content/rhel9.0/x86_64/dvd/AppStream
+    URL = http://content.example.com/rhel9/AppStream
     GPG está desativado (na prova é ativado).
     Repositório está ativado.
 
@@ -42,15 +42,15 @@ iv) Use uma ação separado para cada tarefa e o nome do playbook deve ser packa
     Instale a coleção no diretório de coleções local /home/greg/ansible/mycollection.
     Faça o download dos arquivos tar.gz das URLs fornecidas:
     coleções:
-    http://classroom/materials/redhat-insights-1.0.7.tar.gz
-    http://classroom/materials/community-general-5.5.0.tar.gz
-    http://classroom/materials/redhat-rhel_system_roles-1.19.3.tar.gz
+    http://content.example.com/materials/redhat-insights-1.0.7.tar.gz
+    http://content.example.com/materials/community-general-5.5.0.tar.gz
+    http://content.example.com/materials/redhat-rhel_system_roles-1.19.3.tar.gz
 
 ## 6. Instale roles usando o Ansible Galaxy.
     Crie um diretório 'roles' em /home/greg/ansible.
     i) Crie um playbook chamado requirements.yml no diretório de roles e baixe as roles fornecidas no diretório 'roles' usando o comando galaxy.
-    ii) O nome da role deve ser balancer e fazer o download usando esta url http://classroom/materials/haproxy.tar.
-    iii) O nome da role phpinfo e fazer o download usando esta url http://classroom/materials/phpinfo.tar.
+    ii) O nome da role deve ser balancer e fazer o download usando esta url http://content.example.com/materials/balancer.tgz
+    iii) O nome da role phpinfo e fazer o download usando esta url http://content.example.com/materials/phpinfo.tgz
 
 ## 7. Crie uma role offline chamada apache no diretório de roles.
     i) Instale o pacote httpd, o serviço deve ser iniciado e ativado na inicialização.
@@ -159,7 +159,7 @@ iv) Use uma ação separado para cada tarefa e o nome do playbook deve ser packa
         * Expiração máxima da senha: 30 dias
     iii) * Use a condição when para cada play.
 
-## 16. Recrie a chave do arquivo de variáveis de http://classroom/materials/salaries.yml.
+## 16. Recrie a chave do arquivo de variáveis de http://content.example.com/materials/salaries.yml.
     i) Senha antiga: insecure4sure
     ii) Nova senha: bbe2de98389b
     iii) O arquivo deve permanecer criptografado.

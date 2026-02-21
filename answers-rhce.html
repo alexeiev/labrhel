@@ -148,7 +148,7 @@
                     en: 'Create yum_repo.yml to configure EX294_BASE and EX294_STREAM repositories on all nodes. GPG is disabled for the lab (enabled in the real exam).'
                 },
                 sections: [
-                    { label: 'Playbook: /home/greg/ansible/yum_repo.yml', code: `---\n- name: Configure YUM repositories\n  hosts: all\n  tasks:\n    - name: Configure EX294_BASE repository\n      yum_repository:\n        file: EX294_BASE\n        name: EX294_BASE\n        description: "EX294 base software"\n        baseurl: http://content.example.com/repos/rhel9/BaseOS\n        gpgcheck: no\n        enabled: yes\n\n    - name: Configure EX294_STREAM repository\n      yum_repository:\n        file: EX294_STREAM\n        name: EX294_STREAM\n        description: "EX294 stream software"\n        baseurl: http://content/rhel9.0/x86_64/dvd/AppStream\n        gpgcheck: no\n        enabled: yes` },
+                    { label: 'Playbook: /home/greg/ansible/yum_repo.yml', code: `---\n- name: Configure YUM repositories\n  hosts: all\n  tasks:\n    - name: Configure EX294_BASE repository\n      yum_repository:\n        file: EX294_BASE\n        name: EX294_BASE\n        description: "EX294 base software"\n        baseurl: http://content.example.com/rhel9/BaseOS\n        gpgcheck: no\n        enabled: yes\n\n    - name: Configure EX294_STREAM repository\n      yum_repository:\n        file: EX294_STREAM\n        name: EX294_STREAM\n        description: "EX294 stream software"\n        baseurl: http://http://content.example.com/rhel9/AppStream\n        gpgcheck: no\n        enabled: yes` },
                     { label: { pt: 'Executar', en: 'Execute' }, code: `ansible-navigator run yum_repo.yml -m stdout` }
                 ]
             },
@@ -190,7 +190,7 @@
                     en: 'Install the collections from the provided URLs into /home/greg/ansible/mycollection.'
                 },
                 sections: [
-                    { label: 'Requirements: /home/greg/ansible/requirements.yml', code: `---\ncollections:\n  - name: http://classroom/materials/redhat-insights-1.0.7.tar.gz\n  - name: http://classroom/materials/community-general-5.5.0.tar.gz\n  - name: http://classroom/materials/redhat-rhel_system_roles-1.19.3.tar.gz` },
+                    { label: 'Requirements: /home/greg/ansible/requirements.yml', code: `---\ncollections:\n  - name: http://content.example.com/materials/redhat-insights-1.0.7.tar.gz\n  - name: http://content.example.com/materials/community-general-5.5.0.tar.gz\n  - name: http://content.example.com/materials/redhat-rhel_system_roles-1.19.3.tar.gz` },
                     { label: { pt: 'Instalar', en: 'Install' }, code: `ansible-galaxy collection install -r requirements.yml -p /home/greg/ansible/mycollection` }
                 ]
             },
@@ -204,7 +204,7 @@
                     en: 'Create a roles directory and a requirements.yml file to download the balancer and phpinfo roles.'
                 },
                 sections: [
-                    { label: 'Requirements: /home/greg/ansible/roles/requirements.yml', code: `---\n- src: http://classroom/materials/haproxy.tar\n  name: balancer\n\n- src: http://classroom/materials/phpinfo.tar\n  name: phpinfo` },
+                    { label: 'Requirements: /home/greg/ansible/roles/requirements.yml', code: `---\n- src: http://content.example.com/materials/haproxy.tar\n  name: balancer\n\n- src: http://content.example.com/materials/phpinfo.tar\n  name: phpinfo` },
                     { label: { pt: 'Instalar', en: 'Install' }, code: `ansible-galaxy install -r /home/greg/ansible/roles/requirements.yml -p /home/greg/ansible/roles` }
                 ]
             },
@@ -354,7 +354,7 @@
                     en: 'Download salaries.yml and rekey it with a new password. The file must remain encrypted.'
                 },
                 sections: [
-                    { label: 'Download and rekey', code: `wget http://classroom/materials/salaries.yml -O /home/greg/ansible/salaries.yml\n\nansible-vault rekey --ask-vault-pass /home/greg/ansible/salaries.yml\n# Old password: insecure4sure\n# New password: bbe2de98389b` },
+                    { label: 'Download and rekey', code: `wget http://content.example.com/materials/salaries.yml -O /home/greg/ansible/salaries.yml\n\nansible-vault rekey --ask-vault-pass /home/greg/ansible/salaries.yml\n# Old password: insecure4sure\n# New password: bbe2de98389b` },
                     { label: { pt: 'Validar', en: 'Validate' }, code: `ansible-vault view /home/greg/ansible/salaries.yml --ask-vault-pass\n# Use the new password: bbe2de98389b` }
                 ]
             },

@@ -16,12 +16,12 @@
 ## 2. Create yum_repo.yml for configuring repository in all nodes.
 i) Name = EX294_BASE
    Description = EX294 base software
-   URL = http://content.example.com/repos/rhel9/BaseOS
+   URL = http://content.example.com/rhel9/BaseOS
    GPG is disabled (in the exam it is enabled).
    Repository is enabled.
 ii) Name = EX294_STREAM
     Description = EX294 stream software
-    URL = http://content/rhel9.0/x86_64/dvd/AppStream
+    URL = http://content.example.com/rhel9/AppStream
     GPG is disabled (in the exam it is enabled).
     Repository is enabled.
 
@@ -42,15 +42,15 @@ iv) Use separate play for each task and playbook name should be packages.yml.
     Install the collection in the local collections directory /home/greg/ansible/mycollection.
     Download the tar.gz files from the given URLs:
     collections:
-    http://classroom/materials/redhat-insights-1.0.7.tar.gz
-    http://classroom/materials/community-general-5.5.0.tar.gz
-    http://classroom/materials/redhat-rhel_system_roles-1.19.3.tar.gz
+    http://content.example.com/materials/redhat-insights-1.0.7.tar.gz
+    http://content.example.com/materials/community-general-5.5.0.tar.gz
+    http://content.example.com/materials/redhat-rhel_system_roles-1.19.3.tar.gz
 
 ## 6. Install roles using Ansible Galaxy.
     Create a directory 'roles' under /home/greg/ansible.
     i) Create a playbook called requirements.yml under the roles directory and download the given roles under the 'roles' directory using galaxy command.
-    ii) Role name should be balancer and download using this url http://classroom/materials/haproxy.tar.
-    iii) Role name phpinfo and download using this url http://classroom/materials/phpinfo.tar.
+    ii) Role name should be balancer and download using this url http://content.example.com/materials/balancer.tgz
+    iii) Role name phpinfo and download using this url http://content.example.com/materials/phpinfo.tgz
 
 ## 7. Create offline role named apache under roles directory.
     i) Install httpd package, the service should be started and enabled on boot.
@@ -159,7 +159,7 @@ iv) Use separate play for each task and playbook name should be packages.yml.
         * Password expire maximum days: 30
     iii) * Use when condition for each play.
 
-## 16. Rekey the variable file from http://classroom/materials/salaries.yml.
+## 16. Rekey the variable file from http://content.example.com/materials/salaries.yml.
     i) Old password: insecure4sure
     ii) New password: bbe2de98389b
     iii) The file should remain encrypted.
