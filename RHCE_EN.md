@@ -31,14 +31,7 @@ ii) Install "RPM Development Tools" group package in dev group.
 iii) Update all packages to latest in dev group.
 iv) Use separate play for each task and playbook name should be packages.yml.
 
-## 4. Use RHEL SELinux system role.
-    Create a playbook called /home/greg/ansible/selinux.yml that:
-    - Runs on all managed nodes
-    - Uses the selinux role
-    - Configures the role to use policy: targeted
-    - Configures the role to set state: enforcing
-
-## 5. Installing Ansible Content Collections
+## 4. Installing Ansible Content Collections
     Install the collection in the local collections directory /home/greg/ansible/mycollection.
     Download the tar.gz files from the given URLs:
     collections:
@@ -46,11 +39,18 @@ iv) Use separate play for each task and playbook name should be packages.yml.
     http://content.example.com/materials/community-general-5.5.0.tar.gz
     http://content.example.com/materials/redhat-rhel_system_roles-1.19.3.tar.gz
 
-## 6. Install roles using Ansible Galaxy.
+## 5. Install roles using Ansible Galaxy.
     Create a directory 'roles' under /home/greg/ansible.
     i) Create a playbook called requirements.yml under the roles directory and download the given roles under the 'roles' directory using galaxy command.
     ii) Role name should be balancer and download using this url http://content.example.com/materials/balancer.tgz
     iii) Role name phpinfo and download using this url http://content.example.com/materials/phpinfo.tgz
+
+## 6. Use RHEL SELinux system role.
+    Create a playbook called /home/greg/ansible/selinux.yml that:
+    - Runs on all managed nodes
+    - Uses the selinux role
+    - Configures the role to use policy: targeted
+    - Configures the role to set state: enforcing
 
 ## 7. Create offline role named apache under roles directory.
     i) Install httpd package, the service should be started and enabled on boot.

@@ -31,14 +31,7 @@ ii) Instale o pacote de grupo "RPM Development Tools" no grupo dev.
 iii) Atualize todos os pacotes para a versão mais recente no grupo dev.
 iv) Use uma ação separado para cada tarefa e o nome do playbook deve ser packages.yml.
 
-## 4. Usar a role de sistema RHEL SELinux.
-    Crie um playbook chamado /home/greg/ansible/selinux.yml que:
-    - É executado em todos os nós gerenciados
-    - Usa a role selinux
-    - Configura a role para usar a política: targeted
-    - Configura a role para definir o estado: enforcing
-
-## 5. Instalação de Coleções de Conteúdo Ansible
+## 4. Instalação de Coleções de Conteúdo Ansible
     Instale a coleção no diretório de coleções local /home/greg/ansible/mycollection.
     Faça o download dos arquivos tar.gz das URLs fornecidas:
     coleções:
@@ -46,11 +39,18 @@ iv) Use uma ação separado para cada tarefa e o nome do playbook deve ser packa
     http://content.example.com/materials/community-general-5.5.0.tar.gz
     http://content.example.com/materials/redhat-rhel_system_roles-1.19.3.tar.gz
 
-## 6. Instale roles usando o Ansible Galaxy.
+## 5. Instale roles usando o Ansible Galaxy.
     Crie um diretório 'roles' em /home/greg/ansible.
     i) Crie um playbook chamado requirements.yml no diretório de roles e baixe as roles fornecidas no diretório 'roles' usando o comando galaxy.
     ii) O nome da role deve ser balancer e fazer o download usando esta url http://content.example.com/materials/balancer.tgz
     iii) O nome da role phpinfo e fazer o download usando esta url http://content.example.com/materials/phpinfo.tgz
+
+## 6. Usar a role de sistema RHEL SELinux.
+    Crie um playbook chamado /home/greg/ansible/selinux.yml que:
+    - É executado em todos os nós gerenciados
+    - Usa a role selinux
+    - Configura a role para usar a política: targeted
+    - Configura a role para definir o estado: enforcing
 
 ## 7. Crie uma role offline chamada apache no diretório de roles.
     i) Instale o pacote httpd, o serviço deve ser iniciado e ativado na inicialização.

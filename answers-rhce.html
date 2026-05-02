@@ -168,22 +168,8 @@
             },
             {
                 title: {
-                    pt: '4. Usar role de sistema RHEL SELinux (selinux.yml)',
-                    en: '4. Use RHEL SELinux System Role (selinux.yml)'
-                },
-                enunciado: {
-                    pt: 'Crie um playbook que execute em todos os nos gerenciados, use a role selinux com politica targeted e estado enforcing.',
-                    en: 'Create a playbook that runs on all managed nodes, uses the selinux role with policy targeted and state enforcing.'
-                },
-                sections: [
-                    { label: 'Playbook: /home/greg/ansible/selinux.yml', code: `---\n- name: Configure SELinux\n  hosts: all\n  become: true\n  vars:\n    selinux_policy: targeted\n    selinux_state: enforcing\n  tasks:\n    - name: Apply SELinux role\n      block:\n        - name: Include selinux role\n          include_role:\n            name: rhel-system-roles.selinux\n      rescue:\n        - name: Fail if reboot not required\n          fail:\n            msg: "SELinux role failed"\n          when: not selinux_reboot_required\n\n        - name: Reboot managed host\n          reboot:\n\n        - name: Wait for managed host to come back\n          wait_for_connection:\n            delay: 10\n            timeout: 300\n\n        - name: Reapply the role\n          include_role:\n            name: rhel-system-roles.selinux` },
-                    { label: { pt: 'Executar', en: 'Execute' }, code: `ansible-navigator run selinux.yml -m stdout` }
-                ]
-            },
-            {
-                title: {
-                    pt: '5. Instalar Colecoes de Conteudo Ansible',
-                    en: '5. Install Ansible Content Collections'
+                    pt: '4. Instalar Colecoes de Conteudo Ansible',
+                    en: '4. Install Ansible Content Collections'
                 },
                 enunciado: {
                     pt: 'Instale as colecoes a partir das URLs fornecidas no diretorio /home/greg/ansible/mycollection.',
@@ -196,8 +182,8 @@
             },
             {
                 title: {
-                    pt: '6. Instalar roles usando Ansible Galaxy',
-                    en: '6. Install Roles using Ansible Galaxy'
+                    pt: '5. Instalar roles usando Ansible Galaxy',
+                    en: '5. Install Roles using Ansible Galaxy'
                 },
                 enunciado: {
                     pt: 'Crie um diretorio roles e um arquivo requirements.yml para baixar as roles balancer e phpinfo.',
@@ -206,6 +192,20 @@
                 sections: [
                     { label: 'Requirements: /home/greg/ansible/roles/requirements.yml', code: `---\n- src: http://content.example.com/materials/haproxy.tar\n  name: balancer\n\n- src: http://content.example.com/materials/phpinfo.tar\n  name: phpinfo` },
                     { label: { pt: 'Instalar', en: 'Install' }, code: `ansible-galaxy install -r /home/greg/ansible/roles/requirements.yml -p /home/greg/ansible/roles` }
+                ]
+            },
+            {
+                title: {
+                    pt: '6. Usar role de sistema RHEL SELinux (selinux.yml)',
+                    en: '6. Use RHEL SELinux System Role (selinux.yml)'
+                },
+                enunciado: {
+                    pt: 'Crie um playbook que execute em todos os nos gerenciados, use a role selinux com politica targeted e estado enforcing.',
+                    en: 'Create a playbook that runs on all managed nodes, uses the selinux role with policy targeted and state enforcing.'
+                },
+                sections: [
+                    { label: 'Playbook: /home/greg/ansible/selinux.yml', code: `---\n- name: Configure SELinux\n  hosts: all\n  become: true\n  vars:\n    selinux_policy: targeted\n    selinux_state: enforcing\n  tasks:\n    - name: Apply SELinux role\n      block:\n        - name: Include selinux role\n          include_role:\n            name: rhel-system-roles.selinux\n      rescue:\n        - name: Fail if reboot not required\n          fail:\n            msg: "SELinux role failed"\n          when: not selinux_reboot_required\n\n        - name: Reboot managed host\n          reboot:\n\n        - name: Wait for managed host to come back\n          wait_for_connection:\n            delay: 10\n            timeout: 300\n\n        - name: Reapply the role\n          include_role:\n            name: rhel-system-roles.selinux` },
+                    { label: { pt: 'Executar', en: 'Execute' }, code: `ansible-navigator run selinux.yml -m stdout` }
                 ]
             },
             {
