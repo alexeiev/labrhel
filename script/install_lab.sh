@@ -74,7 +74,7 @@ restorecon -R ${DIR_MATERIALS}/
 
 # Criar usuário admin
 echo "Criando usuário admin..."
-useradd admin -m -s /bin/bash --uid 1010 --gid 1010
+useradd admin -m -s /bin/bash --uid 1010
 echo "admin:redhat" | chpasswd
 echo "Adicionando usuário admin ao grupo wheel..."
 echo "admin ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/admin
