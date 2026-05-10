@@ -10,6 +10,8 @@ DIR_LABRHEL=/var/www/html/labrhel
 DIR_CONFS=../confs
 HOSTS_FILE=${DIR_CONFS}/hosts
 DIR_WWW=../www
+BIN_SCRIPTS=../scripts
+BIN_REPO=${BIN_SCRIPTS}/create_ex294_repo.sh
 
 # Verificar se o script está sendo executado como root
 if [ "$EUID" -ne 0 ]; then
@@ -49,7 +51,7 @@ dnf update -y
 
 # install packages
 echo "Instalando pacotes necessários..."
-dnf install -y httpd bash-completion ansible-core
+dnf install -y httpd bash-completion ansible-core zstd createrepo_c
 dnf install -y --enablerepo=ansible-automation-platform-2.4-for-rhel-9-x86_64-rpms ansible-navigator
 
 # Criar diretórios para repositórios e laboratório
@@ -93,6 +95,10 @@ firewall-cmd --reload
 # Configurar o /etc/hosts da maquina do usuário
 echo "Configurando o arquivo /etc/hosts para o usuário admin..."
 echo  "${IP_ADDRESS} exam.example.com"
+
+# Configurar repositórios para o laboratório
+echo "Configurando repositórios para o laboratório..."
+bash $BIN_REPO
 
 # Configurar o SELinux para permitir o Apache acessar os arquivos do laboratório
 echo "Configurando o SELinux para permitir o Apache acessar os arquivos do laboratório..."
