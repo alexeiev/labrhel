@@ -265,7 +265,7 @@
                 },
                 sections: [
                     { label: 'Download template', code: `wget http://content.example.com/materials/hosts.j2 -O /home/greg/ansible/hosts.j2` },
-                    { label: 'Template: /home/greg/ansible/hosts.j2', code: `127.0.0.1   materials.example.com workstation.lab.example.com exam.example.com localhost localhost.localdomain localhost4 localhost4.localdomain4\n::1         localhost localhost.localdomain localhost6 localhost6.localdomain6\n\n{% for host in groups['all'] %}\n{{ hostvars[host].ansible_default_ipv4.address }} {{ hostvars[host].ansible_fqdn }} {{ host }}\n{% endfor %}` },
+                    { label: 'Template: /home/greg/ansible/hosts.j2', code: `127.0.0.1   materials.example.com workstation.lab.example.com exam.example.com localhost localhost.localdomain localhost4 localhost4.localdomain4\n::1         localhost localhost.localdomain localhost6 localhost6.localdomain6\n\n{% for host in groups['all'] %}\n{{ hostvars[host]['ansible_facts']['default_ipv4']['address'] }} {{ hostvars[host]['ansible_facts']['fqdn'] }} {{ hostvars[host]['ansible_facts']['hostname'] }}\n{% endfor %}` },
                     { label: 'Playbook: /home/greg/ansible/hosts.yml', code: `---\n- name: Gather facts from all hosts\n  hosts: all\n\n- name: Generate /etc/myhosts on dev group\n  hosts: dev\n  tasks:\n    - name: Deploy hosts file from template\n      template:\n        src: /home/greg/ansible/hosts.j2\n        dest: /etc/myhosts` },
                     { label: { pt: 'Executar', en: 'Execute' }, code: `ansible-navigator run hosts.yml -m stdout` }
                 ]

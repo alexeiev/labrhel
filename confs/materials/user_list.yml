@@ -1,0 +1,6 @@
+---
+users:
+  - name: devadm
+    job: developer
+  - name: opsadm
+    job: manager

@@ -1,0 +1,10 @@
+127.0.0.1   materials.example.com workstation.lab.example.com exam.example.com localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+
+IPWOKRSTATION workstation workstation.lab.example.com content.example.com
+IPNODE1 node1 node1.lab.example.com
+IPNODE2 node2 node2.lab.example.com
+IPNODE3 node3 node3.lab.example.com
+IPNODE4 node4 node4.lab.example.com
+IPNODE5 node5 node5.lab.example.com
