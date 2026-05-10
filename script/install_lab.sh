@@ -10,7 +10,7 @@ DIR_LABRHEL=/var/www/html/labrhel
 DIR_CONFS=./confs
 HOSTS_FILE=${DIR_CONFS}/hosts
 DIR_WWW=./www
-BIN_SCRIPTS=./scripts
+BIN_SCRIPTS=./script
 BIN_REPO=${BIN_SCRIPTS}/create_ex294_repo.sh
 
 # Verificar se o script está sendo executado como root
@@ -120,9 +120,18 @@ cp -r ${DIR_CONFS}/ansible/* /home/admin/ansible/
 restorecon -R /home/admin/ansible/
 loginctl enable-linger 1010
 
-su - admin -c "ansible-navigator images pull registry.redhat.io/ansible-automation-platform-24/ee-supported-rhel8:latest"
+# Pull da imagem do Ansible Automation Platform para o usuário admin
+echo "Validar se o usuário admin tem acesso ao Ansible Navigator e fazer pull da imagem do Ansible Automation Platform..."
+su - admin -c "podman login registry.redhat.io --get-login" > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo -e "ERRO: O usuário admin não tem acesso ao registry da Red Hat.\nVamos autenticar:\n\n"
+    su -c admin "podman login registry.redhat.io" && su - admin -c "ansible-navigator images pull registry.redhat.io/ansible-automation-platform-24/ee-supported-rhel8:latest"
+else
+    su - admin -c "ansible-navigator images pull registry.redhat.io/ansible-automation-platform-24/ee-supported-rhel8:latest"
+fi
 
 
 echo "Configuração do laboratório de RHEL 9 concluída com sucesso!"
-echo "Para ter acesso ao laboratório, adicione ao seu /etc/hosts a seguinte entreda $IP_ADDRESS exam.example.com"
+echo -e "Para ter acesso ao laboratório, adicione ao seu /etc/hosts a seguinte entreda $IP_ADDRESS exam.example.com\n"
+echo -e "Copiar o arquivo de /etc/hosts para os seus nodes gerenciados ${HOSTS_FILE} \n"
 echo "Acesse o laboratório através do navegador usando o endereço: http://exam.example.com/"
