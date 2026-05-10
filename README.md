@@ -8,5 +8,5 @@ Com root, execute estes comandos:
 ```bash
 git clone https://github.com/alexeiev/labrhel.git
 cd labrhel
-bash install_lab.sh
+bash script/install_lab.sh
 ```

@@ -7,10 +7,10 @@
 
 DIR_MATERIALS=/var/www/html/repos/materials
 DIR_LABRHEL=/var/www/html/labrhel
-DIR_CONFS=../confs
+DIR_CONFS=./confs
 HOSTS_FILE=${DIR_CONFS}/hosts
-DIR_WWW=../www
-BIN_SCRIPTS=../scripts
+DIR_WWW=./www
+BIN_SCRIPTS=./scripts
 BIN_REPO=${BIN_SCRIPTS}/create_ex294_repo.sh
 
 # Verificar se o script está sendo executado como root
@@ -42,7 +42,7 @@ echo "Configurando o hostname..."
 hostnamectl set-hostname workstation
 #Copiar o arquivo de hosts para o diretório /etc
 echo "Copiando o arquivo de hosts para o diretório /etc..."
-cp $HOSTS_FILE /etc/hosts
+cp -f $HOSTS_FILE /etc/hosts
 restorecon -R /etc/hosts
 
 # Update do sistema
@@ -74,7 +74,7 @@ restorecon -R ${DIR_MATERIALS}/
 
 # Criar usuário admin
 echo "Criando usuário admin..."
-useradd admin -m -s /bin/bash
+useradd admin -m -s /bin/bash --uid 1010 --gid 1010
 echo "admin:redhat" | chpasswd
 echo "Adicionando usuário admin ao grupo wheel..."
 echo "admin ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/admin
@@ -93,8 +93,8 @@ firewall-cmd --permanent --add-service=http
 firewall-cmd --reload
 
 # Configurar o /etc/hosts da maquina do usuário
-echo "Configurando o arquivo /etc/hosts para o usuário admin..."
-echo  "${IP_ADDRESS} exam.example.com"
+echo "Configurando o arquivo /etc/hosts para o seu computador. Adicione a seguinte entrada."
+echo -e "${IP_ADDRESS} exam.example.com\n"
 
 # Configurar repositórios para o laboratório
 echo "Configurando repositórios para o laboratório..."
@@ -111,6 +111,16 @@ restorecon -R ${DIR_MATERIALS}/
 echo "Iniciando o serviço do Apache e habilitando-o para iniciar na inicialização..."
 systemctl start httpd
 systemctl enable httpd
+
+# Criando diretório do ansible no home do admin
+echo "Criando diretório do Ansible no home do admin..."
+mkdir -p /home/admin/ansible
+chown -R admin:admin /home/admin/ansible
+cp -r ${DIR_CONFS}/ansible/* /home/admin/ansible/
+restorecon -R /home/admin/ansible/
+loginctl enable-linger 1010
+
+su - admin -c "ansible-navigator images pull registry.redhat.io/ansible-automation-platform-24/ee-supported-rhel8:latest"
 
 
 echo "Configuração do laboratório de RHEL 9 concluída com sucesso!"
