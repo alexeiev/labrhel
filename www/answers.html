@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red Hat Lab - Answers</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        #app-container {
+            display: flex;
+            height: 100%;
+        }
+        #sidebar {
+            width: 220px;
+            min-width: 220px;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+        #sidebar h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #555;
+            padding-bottom: 10px;
+        }
+        #sidebar select, #sidebar button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: none;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #sidebar button:hover {
+            background-color: #666;
+        }
+        #main-content {
+            flex-grow: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        .answer-block {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 25px;
+            border: 1px solid #ddd;
+        }
+        .answer-block h2 {
+            margin-top: 0;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            font-size: 18px;
+            color: #333;
+        }
+        .answer-block h3 {
+            color: #555;
+            font-size: 14px;
+            margin-top: 18px;
+            margin-bottom: 6px;
+        }
+        .answer-block pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .section-text {
+            color: #333;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 8px 0 10px 0;
+            white-space: pre-wrap;
+        }
+        .enunciado {
+            background-color: #f0f4f8;
+            border-left: 4px solid #007bff;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .page-header h1 {
+            margin: 0;
+            font-size: 22px;
+            color: #333;
+        }
+        .loading-msg {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 18px;
+        }
+        .error-msg {
+            text-align: center;
+            padding: 40px;
+            color: #cc0000;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <div id="sidebar">
+            <h2>Respostas</h2>
+            <h2 style="margin-top: 20px;">Exame</h2>
+            <select id="examSelect">
+                <option value="">-- Escolha --</option>
+                <option value="rhcsa">RHCSA</option>
+                <option value="rhce">RHCE</option>
+                <option value="ocp-ex280">OCP EX280</option>
+            </select>
+            <h2 style="margin-top: 20px;">Idioma</h2>
+            <select id="languageSelect">
+                <option value="pt">Portugues</option>
+                <option value="en">English</option>
+            </select>
+            <button style="margin-top: 30px; background-color: #007bff;" onclick="window.location.href='index.html'">Voltar ao Lab</button>
+        </div>
+        <div id="main-content">
+        </div>
+    </div>
+
+    <script>
+        const mainContentDiv = document.getElementById('main-content');
+        const examSelect = document.getElementById('examSelect');
+        const languageSelect = document.getElementById('languageSelect');
+
+        const FILE_MAP = {
+            'rhcsa': { pt: 'RHCSA_ANSWERS_PT.md', en: 'RHCSA_ANSWERS_EN.md' },
+            'rhce': { pt: 'RHCE_ANSWERS_PT.md', en: 'RHCE_ANSWERS_EN.md' },
+            'ocp-ex280': { pt: 'OCP_EX280_ANSWERS_PT.md', en: 'OCP_EX280_ANSWERS_EN.md' }
+        };
+
+        const EXAM_LABELS = {
+            'rhcsa': 'RHCSA (EX200)',
+            'rhce': 'RHCE (EX294)',
+            'ocp-ex280': 'OCP EX280'
+        };
+
+        const contentCache = {};
+
+        async function fetchContent(exam, lang) {
+            const key = `${exam}_${lang}`;
+            if (contentCache[key]) return contentCache[key];
+            const files = FILE_MAP[exam];
+            if (!files || !files[lang]) throw new Error(lang === 'pt'
+                ? 'Respostas ainda nao disponiveis para este exame.'
+                : 'Answers are not available for this exam yet.');
+            const response = await fetch(files[lang]);
+            if (!response.ok) throw new Error(`Erro ao carregar ${files[lang]}`);
+            const text = await response.text();
+            contentCache[key] = text;
+            return text;
+        }
+
+        function parseAnswers(markdown) {
+            const blocks = markdown.split(/^## /m).slice(1);
+            return blocks.map(block => {
+                const lines = block.trimEnd().split('\n');
+                const title = lines.shift().trim();
+                const sections = [];
+                const enunciadoLines = [];
+                let currentSection = null;
+                let inCode = false;
+                let codeLines = [];
+                let textLines = [];
+                let codeLang = '';
+
+                function flushText() {
+                    if (!currentSection) return;
+                    const text = textLines.join('\n').trim();
+                    if (text) currentSection.items.push({ type: 'text', text });
+                    textLines = [];
+                }
+
+                lines.forEach(line => {
+                    const fence = line.match(/^`{3,}\s*(.*)$/);
+                    if (fence) {
+                        if (inCode) {
+                            if (currentSection) {
+                                currentSection.items.push({
+                                    type: 'code',
+                                    lang: codeLang,
+                                    text: codeLines.join('\n')
+                                });
+                            }
+                            codeLines = [];
+                            codeLang = '';
+                            inCode = false;
+                        } else {
+                            flushText();
+                            codeLang = fence[1].trim();
+                            inCode = true;
+                        }
+                        return;
+                    }
+
+                    if (inCode) {
+                        codeLines.push(line);
+                        return;
+                    }
+
+                    if (line.startsWith('### ')) {
+                        flushText();
+                        currentSection = { label: line.slice(4).trim(), items: [] };
+                        sections.push(currentSection);
+                        return;
+                    }
+
+                    if (!currentSection) enunciadoLines.push(line);
+                    else textLines.push(line);
+                });
+
+                flushText();
+
+                return {
+                    title,
+                    enunciado: enunciadoLines.join('\n').trim(),
+                    sections
+                };
+            });
+        }
+
+        function renderAnswers(answers) {
+            mainContentDiv.innerHTML = '';
+
+            const header = document.createElement('div');
+            header.className = 'page-header';
+            const h1 = document.createElement('h1');
+            const examLabel = EXAM_LABELS[examSelect.value] || examSelect.value;
+            h1.textContent = languageSelect.value === 'pt'
+                ? `${examLabel} - Respostas`
+                : `${examLabel} - Answers`;
+            header.appendChild(h1);
+            mainContentDiv.appendChild(header);
+
+            answers.forEach(answer => {
+                const block = document.createElement('div');
+                block.className = 'answer-block';
+
+                const title = document.createElement('h2');
+                title.textContent = answer.title;
+                block.appendChild(title);
+
+                if (answer.enunciado) {
+                    const enunciado = document.createElement('div');
+                    enunciado.className = 'enunciado';
+                    enunciado.textContent = answer.enunciado;
+                    block.appendChild(enunciado);
+                }
+
+                answer.sections.forEach(section => {
+                    const h3 = document.createElement('h3');
+                    h3.textContent = section.label;
+                    block.appendChild(h3);
+
+                    section.items.forEach(item => {
+                        if (item.type === 'code') {
+                            const pre = document.createElement('pre');
+                            pre.textContent = item.text;
+                            block.appendChild(pre);
+                            return;
+                        }
+
+                        const text = document.createElement('div');
+                        text.className = 'section-text';
+                        text.textContent = item.text;
+                        block.appendChild(text);
+                    });
+                });
+
+                mainContentDiv.appendChild(block);
+            });
+        }
+
+        async function loadAndRender() {
+            const exam = examSelect.value;
+            const lang = languageSelect.value;
+
+            if (!exam) {
+                mainContentDiv.innerHTML = `<div class="loading-msg">${
+                    lang === 'pt' ? 'Selecione um exame.' : 'Select an exam.'
+                }</div>`;
+                return;
+            }
+
+            try {
+                mainContentDiv.innerHTML = `<div class="loading-msg">${
+                    lang === 'pt' ? 'Carregando respostas...' : 'Loading answers...'
+                }</div>`;
+                const markdown = await fetchContent(exam, lang);
+                renderAnswers(parseAnswers(markdown));
+            } catch (err) {
+                mainContentDiv.innerHTML = `<div class="error-msg">${err.message}</div>`;
+            }
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const urlExam = params.get('exam');
+        const urlLang = params.get('lang');
+
+        if (urlExam && Object.prototype.hasOwnProperty.call(EXAM_LABELS, urlExam)) {
+            examSelect.value = urlExam;
+        }
+        if (urlLang && (urlLang === 'pt' || urlLang === 'en')) {
+            languageSelect.value = urlLang;
+        }
+
+        examSelect.addEventListener('change', loadAndRender);
+        languageSelect.addEventListener('change', loadAndRender);
+        loadAndRender();
+    </script>
+</body>
+</html>

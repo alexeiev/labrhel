@@ -265,6 +265,7 @@
                 <option value="">-- Escolha --</option>
                 <option value="rhcsa">RHCSA</option>
                 <option value="rhce">RHCE</option>
+                <option value="ocp-ex280">OCP EX280</option>
             </select>
             <h2 style="margin-top: 20px;">Idioma</h2>
             <select id="languageSelect">
@@ -291,7 +292,8 @@
         let timerInterval;
         const EXAM_DURATION = {
             'rhcsa': 3 * 60 * 60,
-            'rhce': 4 * 60 * 60
+            'rhce': 4 * 60 * 60,
+            'ocp-ex280': 3 * 60 * 60
         };
         const DEFAULT_SECONDS = 4 * 60 * 60;
         let totalSeconds = DEFAULT_SECONDS;
@@ -302,12 +304,14 @@
 
         const FILE_MAP = {
             'rhcsa': { pt: 'RHCSA_PT.md', en: 'RHCSA_EN.md' },
-            'rhce': { pt: 'RHCE_PT.md', en: 'RHCE_EN.md' }
+            'rhce': { pt: 'RHCE_PT.md', en: 'RHCE_EN.md' },
+            'ocp-ex280': { pt: 'OCP_EX280_PT.md', en: 'OCP_EX280_EN.md' }
         };
 
         const EXAM_LABELS = {
             'rhcsa': 'RHCSA',
-            'rhce': 'RHCE'
+            'rhce': 'RHCE',
+            'ocp-ex280': 'OCP EX280'
         };
 
         function renderLanding() {
@@ -331,7 +335,8 @@
 
             const exams = [
                 { id: 'rhcsa', label: 'RHCSA', desc: 'EX200' },
-                { id: 'rhce', label: 'RHCE', desc: 'EX294' }
+                { id: 'rhce', label: 'RHCE', desc: 'EX294' },
+                { id: 'ocp-ex280', label: 'OCP', desc: 'EX280' }
             ];
 
             exams.forEach(exam => {
@@ -383,7 +388,9 @@
 
         function parseQuestions(markdown) {
             const content = markdown.split('## ').slice(1);
-            return content.map((block, index) => {
+            return content
+                .filter(block => /^\d+\.\s/.test(block.trim()))
+                .map((block, index) => {
                 const lines = block.trim().split('\n');
                 const title = lines[0].trim();
                 const body = lines.slice(1).join('\n').trim();
@@ -562,15 +569,9 @@
             updateTimerDisplay();
         }
 
-        const ANSWERS_MAP = {
-            'rhcsa': 'answers-rhcsa.html',
-            'rhce': 'answers-rhce.html'
-        };
-
         function openAnswers() {
-            const page = ANSWERS_MAP[currentExam];
-            if (page) {
-                window.open(page + '?lang=' + currentLang, '_blank');
+            if (currentExam && FILE_MAP[currentExam]) {
+                window.open(`answers.html?exam=${currentExam}&lang=${currentLang}`, '_blank');
             } else {
                 alert(currentLang === 'pt'
                     ? 'Selecione um exame primeiro.'
