@@ -13,3 +13,6 @@
 !RHCSA_ANSWERS_PT.md
 !RHCSA_EN.md
 !RHCSA_PT.md
+
+# Imagem do execution environment publicada como asset de GitHub Release
+confs/materials/ee-supported-rhel8.tar.gz

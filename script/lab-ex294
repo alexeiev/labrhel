@@ -1,0 +1,454 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import sys
+import time
+
+import requests
+import urllib3
+
+
+# ============================================================
+# Configuração
+# ============================================================
+
+PROXMOX_HOST = "100.64.254.1"
+PROXMOX_PORT = 8006
+
+API_USER = "lab-rhel@pve"
+API_TOKEN_ID = "secret"
+API_TOKEN_SECRET = os.getenv("PROXMOX_TOKEN_SECRET")
+
+VM_TAG = "RHCE-NODES"
+SNAPSHOT_NAME = "Maquina_pronta"
+
+VERIFY_SSL = False
+
+TASK_INTERVAL = 2
+TASK_TIMEOUT = 300
+
+
+# ============================================================
+# Proxmox API
+# ============================================================
+
+class ProxmoxAPI:
+    def __init__(self):
+        if not API_TOKEN_SECRET:
+            print(
+                "ERRO: variável PROXMOX_TOKEN_SECRET não definida.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+        if not VERIFY_SSL:
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+        self.base_url = (
+            f"https://{PROXMOX_HOST}:{PROXMOX_PORT}/api2/json"
+        )
+
+        self.session = requests.Session()
+        self.session.verify = VERIFY_SSL
+
+        self.session.headers.update(
+            {
+                "Authorization": (
+                    f"PVEAPIToken="
+                    f"{API_USER}!{API_TOKEN_ID}={API_TOKEN_SECRET}"
+                )
+            }
+        )
+
+    def get(self, path):
+        response = self.session.get(
+            f"{self.base_url}{path}",
+            timeout=30,
+        )
+        response.raise_for_status()
+        return response.json()["data"]
+
+    def post(self, path, data=None):
+        response = self.session.post(
+            f"{self.base_url}{path}",
+            data=data or {},
+            timeout=30,
+        )
+        response.raise_for_status()
+        return response.json()["data"]
+
+    def get_lab_vms(self):
+        resources = self.get("/cluster/resources?type=vm")
+
+        lab_vms = []
+
+        for vm in resources:
+            if vm.get("type") != "qemu":
+                continue
+
+            tags = vm.get("tags", "")
+            tag_list = tags.split(";")
+
+            if VM_TAG in tag_list:
+                lab_vms.append(vm)
+
+        return sorted(
+            lab_vms,
+            key=lambda vm: vm["vmid"],
+        )
+
+    def snapshot_exists(self, node, vmid):
+        snapshots = self.get(
+            f"/nodes/{node}/qemu/{vmid}/snapshot"
+        )
+
+        return any(
+            snapshot.get("name") == SNAPSHOT_NAME
+            for snapshot in snapshots
+        )
+
+    def rollback(self, node, vmid):
+        return self.post(
+            f"/nodes/{node}/qemu/{vmid}/snapshot/"
+            f"{SNAPSHOT_NAME}/rollback"
+        )
+
+    def start_vm(self, node, vmid):
+        return self.post(
+            f"/nodes/{node}/qemu/{vmid}/status/start"
+        )
+
+    def stop_vm(self, node, vmid):
+        return self.post(
+            f"/nodes/{node}/qemu/{vmid}/status/stop"
+        )
+
+    def get_vm_status(self, node, vmid):
+        return self.get(
+            f"/nodes/{node}/qemu/{vmid}/status/current"
+        )
+
+    def wait_for_task(self, node, upid):
+        start_time = time.time()
+
+        while True:
+            task = self.get(
+                f"/nodes/{node}/tasks/{upid}/status"
+            )
+
+            if task.get("status") == "stopped":
+                exit_status = task.get("exitstatus")
+
+                if exit_status != "OK":
+                    raise RuntimeError(
+                        f"Task terminou com erro: {exit_status}"
+                    )
+
+                return
+
+            if time.time() - start_time > TASK_TIMEOUT:
+                raise TimeoutError(
+                    f"Timeout aguardando task {upid}"
+                )
+
+            time.sleep(TASK_INTERVAL)
+
+    def wait_for_vm_status(self, node, vmid, desired_status):
+        start_time = time.time()
+
+        while True:
+            status = self.get_vm_status(node, vmid)
+
+            if status.get("status") == desired_status:
+                return
+
+            if time.time() - start_time > TASK_TIMEOUT:
+                raise TimeoutError(
+                    f"Timeout aguardando VM {vmid} "
+                    f"ficar {desired_status}"
+                )
+
+            time.sleep(TASK_INTERVAL)
+
+
+# ============================================================
+# Funções do laboratório
+# ============================================================
+
+def show_vms(vms):
+    print()
+    print(f"VMs encontradas com a tag {VM_TAG}:")
+    print()
+
+    for vm in vms:
+        print(
+            f"  {vm['vmid']:<5} "
+            f"{vm.get('name', 'sem-nome'):<20} "
+            f"node={vm['node']}"
+        )
+
+    print()
+
+
+def validate_lab(api, vms):
+    if not vms:
+        print(
+            f"ERRO: nenhuma VM encontrada com a tag {VM_TAG}.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    print(f"Validando snapshot {SNAPSHOT_NAME}...")
+
+    errors = []
+
+    for vm in vms:
+        name = vm.get("name", vm["vmid"])
+
+        print(
+            f"  {name:<20} ",
+            end="",
+            flush=True,
+        )
+
+        try:
+            exists = api.snapshot_exists(
+                vm["node"],
+                vm["vmid"],
+            )
+
+            if exists:
+                print("OK")
+            else:
+                print("AUSENTE")
+                errors.append(name)
+
+        except requests.RequestException as exc:
+            print("ERRO")
+            errors.append(f"{name}: {exc}")
+
+    if errors:
+        print()
+        print("ERRO: validação do laboratório falhou:")
+        for error in errors:
+            print(f"  - {error}")
+
+        sys.exit(1)
+
+    print()
+
+
+def rollback_vms(api, vms):
+    print(f"Revertendo snapshot {SNAPSHOT_NAME}...")
+    print()
+
+    for vm in vms:
+        name = vm.get("name", str(vm["vmid"]))
+        node = vm["node"]
+        vmid = vm["vmid"]
+
+        print(
+            f"[{name}] Executando rollback...",
+            flush=True,
+        )
+
+        upid = api.rollback(node, vmid)
+
+        api.wait_for_task(node, upid)
+
+        print(
+            f"[{name}] Rollback concluído."
+        )
+
+    print()
+
+
+def start_vms(api, vms):
+    print("Iniciando VMs...")
+    print()
+
+    for vm in vms:
+        name = vm.get("name", str(vm["vmid"]))
+        node = vm["node"]
+        vmid = vm["vmid"]
+
+        status = api.get_vm_status(node, vmid)
+
+        if status.get("status") == "running":
+            print(f"[{name}] Já está ligada.")
+            continue
+
+        print(f"[{name}] Iniciando...")
+
+        upid = api.start_vm(node, vmid)
+        api.wait_for_task(node, upid)
+        api.wait_for_vm_status(node, vmid, "running")
+
+        print(f"[{name}] Ligada.")
+
+    print()
+
+
+def ensure_vms_stopped(api, vms):
+    print("Validando estado final das VMs...")
+    print()
+
+    for vm in vms:
+        name = vm.get("name", str(vm["vmid"]))
+        node = vm["node"]
+        vmid = vm["vmid"]
+
+        status = api.get_vm_status(node, vmid)
+
+        if status.get("status") == "stopped":
+            print(f"[{name}] Desligada.")
+            continue
+
+        print(
+            f"[{name}] Ainda está ligada. Desligando..."
+        )
+
+        upid = api.stop_vm(node, vmid)
+        api.wait_for_task(node, upid)
+        api.wait_for_vm_status(node, vmid, "stopped")
+
+        print(f"[{name}] Desligada.")
+
+    print()
+
+
+# ============================================================
+# Comandos
+# ============================================================
+
+def command_start(api):
+    print()
+    print("========================================")
+    print(" EX294 LAB - START")
+    print("========================================")
+
+    vms = api.get_lab_vms()
+
+    show_vms(vms)
+    validate_lab(api, vms)
+
+    rollback_vms(api, vms)
+    start_vms(api, vms)
+
+    print("========================================")
+    print(" Laboratório iniciado com sucesso.")
+    print("========================================")
+    print()
+
+
+def command_finish(api):
+    print()
+    print("========================================")
+    print(" EX294 LAB - FINISH")
+    print("========================================")
+
+    vms = api.get_lab_vms()
+
+    show_vms(vms)
+    validate_lab(api, vms)
+
+    rollback_vms(api, vms)
+
+    # Como o snapshot foi feito com as máquinas desligadas,
+    # normalmente elas já estarão stopped.
+    # Mesmo assim validamos explicitamente.
+    ensure_vms_stopped(api, vms)
+
+    print("========================================")
+    print(" Laboratório finalizado com sucesso.")
+    print("========================================")
+    print()
+
+
+# ============================================================
+# CLI
+# ============================================================
+
+def create_parser():
+    parser = argparse.ArgumentParser(
+        prog="lab-ex294",
+        description=(
+            "Gerenciamento do laboratório EX294 no Proxmox"
+        ),
+    )
+
+    subparsers = parser.add_subparsers(
+        dest="command",
+        metavar="{start,finish,help}",
+    )
+
+    subparsers.add_parser(
+        "start",
+        help=(
+            f"Reverte o snapshot {SNAPSHOT_NAME} "
+            "e inicia as VMs"
+        ),
+    )
+
+    subparsers.add_parser(
+        "finish",
+        help=(
+            f"Reverte o snapshot {SNAPSHOT_NAME} "
+            "e deixa as VMs desligadas"
+        ),
+    )
+
+    subparsers.add_parser(
+        "help",
+        help="Exibe esta ajuda",
+    )
+
+    return parser
+
+
+def main():
+    parser = create_parser()
+    args = parser.parse_args()
+
+    if args.command in (None, "help"):
+        parser.print_help()
+        return
+
+    try:
+        api = ProxmoxAPI()
+
+        if args.command == "start":
+            command_start(api)
+
+        elif args.command == "finish":
+            command_finish(api)
+
+    except requests.exceptions.ConnectionError as exc:
+        print(
+            f"\nERRO: não foi possível conectar ao Proxmox:\n{exc}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    except requests.exceptions.HTTPError as exc:
+        print(
+            f"\nERRO HTTP da API do Proxmox:\n{exc}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    except (RuntimeError, TimeoutError) as exc:
+        print(
+            f"\nERRO: {exc}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    except KeyboardInterrupt:
+        print("\nOperação cancelada.")
+        sys.exit(130)
+
+
+if __name__ == "__main__":
+    main()

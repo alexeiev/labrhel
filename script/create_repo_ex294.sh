@@ -31,6 +31,10 @@ PACKAGES_LIST=(
     firewalld
     rhel-system-roles
     ansible-core
+    python3-blivet
+    libblockdev-dm
+    stratisd
+    stratis-cli
 )
 
 # Grupos alvo (passados literalmente, sem array para evitar problemas

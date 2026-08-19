@@ -1,0 +1,19 @@
+_lab_ex294_completion()
+{
+    local cur prev commands
+
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    commands="start finish help"
+
+    if [[ ${COMP_CWORD} -eq 1 ]]; then
+        COMPREPLY=(
+            $(compgen -W "${commands}" -- "${cur}")
+        )
+        return 0
+    fi
+}
+
+complete -F _lab_ex294_completion lab-ex294
