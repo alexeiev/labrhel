@@ -247,7 +247,7 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-if ! subscription-manager status >/dev/null 2>&1; then
+if ! subscription-manager repos >/dev/null 2>&1; then
     echo "ERRO: O sistema não está registrado ou não tem uma subscrição ativa."
     echo "      Use 'subscription-manager register --username <username>' para registrar o sistema."
     exit 1
