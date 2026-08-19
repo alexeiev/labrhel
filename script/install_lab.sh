@@ -12,6 +12,65 @@ HOSTS_FILE=${DIR_CONFS}/hosts
 DIR_WWW=./www
 BIN_SCRIPTS=./script
 BIN_REPO=${BIN_SCRIPTS}/create_ex294_repo.sh
+EE_IMAGE_URL=https://github.com/alexeiev/labrhel/releases/download/lab-assets-v1/ee-supported-rhel8.tar.gz
+EE_IMAGE_ARCHIVE=${DIR_MATERIALS}/ee-supported-rhel8.tar.gz
+EE_IMAGE_SHA256=5bc1217cfd78629305c6a10f3f7479dba337a20f5b99ea249c12ed87acba3928
+EE_IMAGE_ID=sha256:98963ebb0b830f2fe63ce44f31de51fcd1599d445bbb01c10d95f91e334f87ff
+EE_IMAGE_NAME=registry.redhat.io/ansible-automation-platform-24/ee-supported-rhel8:latest
+
+download_execution_environment() {
+    local download_tmp="${EE_IMAGE_ARCHIVE}.part"
+
+    if [ -f "$EE_IMAGE_ARCHIVE" ] && \
+       echo "${EE_IMAGE_SHA256}  ${EE_IMAGE_ARCHIVE}" | sha256sum --check --status; then
+        echo "Imagem do execution environment já está disponível e íntegra."
+        return 0
+    fi
+
+    echo "Baixando imagem do execution environment..."
+    if ! curl --fail --location --retry 3 --retry-delay 5 \
+        --output "$download_tmp" "$EE_IMAGE_URL"; then
+        echo "ERRO: Não foi possível baixar a imagem do execution environment."
+        return 1
+    fi
+
+    if ! echo "${EE_IMAGE_SHA256}  ${download_tmp}" | sha256sum --check --status; then
+        echo "ERRO: O checksum da imagem baixada é inválido."
+        return 1
+    fi
+
+    mv -f "$download_tmp" "$EE_IMAGE_ARCHIVE"
+    chmod 0644 "$EE_IMAGE_ARCHIVE"
+}
+
+import_execution_environment() {
+    local load_output
+
+    if su - admin -c "podman image exists '${EE_IMAGE_NAME}'"; then
+        echo "Imagem do execution environment já está importada."
+        return 0
+    fi
+
+    echo "Importando imagem do execution environment no Podman do usuário admin..."
+    if ! load_output=$(su - admin -c "podman load --input '${EE_IMAGE_ARCHIVE}'" 2>&1); then
+        echo "$load_output"
+        echo "ERRO: Não foi possível importar a imagem no Podman."
+        return 1
+    fi
+    echo "$load_output"
+
+    if ! su - admin -c "podman image exists '${EE_IMAGE_ID}'"; then
+        echo "ERRO: A imagem importada não possui o ID esperado ${EE_IMAGE_ID}."
+        return 1
+    fi
+
+    if ! su - admin -c "podman tag '${EE_IMAGE_ID}' '${EE_IMAGE_NAME}'"; then
+        echo "ERRO: Não foi possível aplicar a tag ${EE_IMAGE_NAME}."
+        return 1
+    fi
+
+    echo "Imagem disponível como ${EE_IMAGE_NAME}."
+}
 
 # Verificar se o script está sendo executado como root
 if [ "$EUID" -ne 0 ]; then
@@ -51,7 +110,7 @@ dnf update -y
 
 # install packages
 echo "Instalando pacotes necessários..."
-dnf install -y httpd bash-completion ansible-core zstd createrepo_c
+dnf install -y httpd bash-completion ansible-core zstd createrepo_c curl podman
 dnf install -y --enablerepo=ansible-automation-platform-2.4-for-rhel-9-x86_64-rpms ansible-navigator
 
 # Criar diretórios para repositórios e laboratório
@@ -71,6 +130,10 @@ cp -r ${DIR_WWW}/* ${DIR_LABRHEL}/
 echo "Copiando arquivos de materials para o diretório do Apache..."
 cp -r ${DIR_CONFS}/materials/* ${DIR_MATERIALS}/
 restorecon -R ${DIR_MATERIALS}/
+
+if ! download_execution_environment; then
+    exit 1
+fi
 
 # Criar usuário admin
 echo "Criando usuário admin..."
@@ -120,14 +183,8 @@ cp -r ${DIR_CONFS}/ansible/* /home/admin/ansible/
 restorecon -R /home/admin/ansible/
 loginctl enable-linger 1010
 
-# Pull da imagem do Ansible Automation Platform para o usuário admin
-echo "Validar se o usuário admin tem acesso ao Ansible Navigator e fazer pull da imagem do Ansible Automation Platform..."
-su - admin -c "podman login registry.redhat.io --get-login" > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-    echo -e "ERRO: O usuário admin não tem acesso ao registry da Red Hat.\nVamos autenticar:\n\n"
-    su -c admin "podman login registry.redhat.io" && su - admin -c "ansible-navigator images pull registry.redhat.io/ansible-automation-platform-24/ee-supported-rhel8:latest"
-else
-    su - admin -c "ansible-navigator images pull registry.redhat.io/ansible-automation-platform-24/ee-supported-rhel8:latest"
+if ! import_execution_environment; then
+    exit 1
 fi
 
 
