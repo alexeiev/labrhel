@@ -8,4 +8,4 @@ ansible-navigator:
     enable: False
   logging:
     level: critical
-    file: /home/admin/ansible-navigator.log
+    file: /home/greg/ansible-navigator.log

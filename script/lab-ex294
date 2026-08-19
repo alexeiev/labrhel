@@ -2,6 +2,8 @@
 
 import argparse
 import os
+from pathlib import Path
+import shlex
 import sys
 import time
 
@@ -13,12 +15,55 @@ import urllib3
 # Configuração
 # ============================================================
 
-PROXMOX_HOST = "100.64.254.1"
 PROXMOX_PORT = 8006
 
-API_USER = "lab-rhel@pve"
-API_TOKEN_ID = "secret"
-API_TOKEN_SECRET = os.getenv("PROXMOX_TOKEN_SECRET")
+
+def load_env_file():
+    env_file = Path.home() / ".config" / "lab-ex294" / "env"
+    values = {}
+
+    try:
+        lines = env_file.read_text(encoding="utf-8").splitlines()
+    except FileNotFoundError:
+        return values
+    except OSError as exc:
+        print(
+            f"ERRO: não foi possível ler {env_file}: {exc}",
+            file=sys.stderr,
+        )
+        return values
+
+    for line in lines:
+        line = line.strip()
+
+        if line.startswith("export "):
+            line = line.removeprefix("export ").strip()
+
+        key, separator, value = line.partition("=")
+
+        if separator:
+            try:
+                parsed_value = shlex.split(value, posix=True)
+            except ValueError:
+                continue
+
+            if len(parsed_value) == 1:
+                values[key.strip()] = parsed_value[0]
+
+    return values
+
+
+ENV_FILE_VALUES = load_env_file()
+
+
+def load_config_value(name):
+    return os.getenv(name) or ENV_FILE_VALUES.get(name)
+
+
+PROXMOX_HOST = load_config_value("PROXMOX_HOST")
+PROXMOX_API_USER = load_config_value("PROXMOX_API_USER")
+API_TOKEN_SECRET = load_config_value("PROXMOX_TOKEN_SECRET")
+
 
 VM_TAG = "RHCE-NODES"
 SNAPSHOT_NAME = "Maquina_pronta"
@@ -35,9 +80,30 @@ TASK_TIMEOUT = 300
 
 class ProxmoxAPI:
     def __init__(self):
-        if not API_TOKEN_SECRET:
+        invalid_values = {
+            None,
+            "",
+            "SEU_HOST_PROXMOX",
+            "SEU_SECRET",
+        }
+
+        if (
+            PROXMOX_HOST in invalid_values
+            or PROXMOX_API_USER in invalid_values
+            or API_TOKEN_SECRET in invalid_values
+        ):
             print(
-                "ERRO: variável PROXMOX_TOKEN_SECRET não definida.",
+                "ERRO: configure PROXMOX_HOST, PROXMOX_API_USER e "
+                "PROXMOX_TOKEN_SECRET em "
+                "~/.config/lab-ex294/env.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+        if "!" not in PROXMOX_API_USER:
+            print(
+                "ERRO: PROXMOX_API_USER deve usar o formato "
+                "usuario@realm!token.",
                 file=sys.stderr,
             )
             sys.exit(1)
@@ -56,7 +122,7 @@ class ProxmoxAPI:
             {
                 "Authorization": (
                     f"PVEAPIToken="
-                    f"{API_USER}!{API_TOKEN_ID}={API_TOKEN_SECRET}"
+                    f"{PROXMOX_API_USER}={API_TOKEN_SECRET}"
                 )
             }
         )
