@@ -35,6 +35,7 @@ PACKAGES_LIST=(
     libblockdev-dm
     stratisd
     stratis-cli
+    haproxy
 )
 
 # Grupos alvo (passados literalmente, sem array para evitar problemas

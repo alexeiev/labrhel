@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=REDHAT_EX294
+Comment=Acesso ao exame EX294
+Exec=firefox http://exam.example.com
+Icon=/home/student/.local/share/icons/redhat.png
+Terminal=false
+Categories=Education;Network;

@@ -2,8 +2,8 @@
 
 Este projeto prepara uma workstation RHEL 9 para estudos práticos dos exames
 Red Hat. O instalador configura a interface gráfica, Ansible, Podman, Apache,
-repositórios RPM locais, materiais dos exercícios e a interface web com os
-simulados RHCSA, RHCE e OpenShift.
+Visual Studio Code, repositórios RPM locais, materiais dos exercícios e a
+interface web com os simulados RHCSA, RHCE e OpenShift.
 
 O laboratório também inclui o comando `lab-ex294`, usado pelo usuário
 `student` para restaurar, iniciar e finalizar as VMs do ambiente no Proxmox.
@@ -41,8 +41,8 @@ todas possuam o snapshot indicado.
 - RHEL 9 x86_64 registrado no Red Hat Subscription Management;
 - acesso aos repositórios BaseOS e AppStream;
 - acesso ao repositório do Ansible Automation Platform 2.4;
-- acesso à internet para pacotes e para a GitHub Release do execution
-  environment;
+- acesso à internet para pacotes, para o repositório oficial do Visual Studio
+  Code e para as imagens disponibilizadas na GitHub Release;
 - conectividade HTTPS com a porta `8006` do Proxmox;
 - endereço IP estável;
 - acesso de `root` ou `sudo`;
@@ -55,7 +55,8 @@ repositórios locais.
 
 Uma instalação minimal é suportada. O script detecta `gnome-shell` e `gdm` e,
 quando necessário, instala o grupo `Server with GUI`, habilita o GDM e define
-o boot gráfico como padrão.
+o boot gráfico como padrão. O Visual Studio Code stable é instalado pelo
+[repositório RPM oficial da Microsoft](https://code.visualstudio.com/docs/setup/linux).
 
 ## Preparar as VMs gerenciadas
 
@@ -168,6 +169,10 @@ O instalador cria os usuários locais abaixo quando eles ainda não existem:
 As senhas iniciais podem ser substituídas na primeira execução usando as
 variáveis `STUDENT_PASSWORD`, `GREG_PASSWORD` e `DEVOPS_PASSWORD`.
 
+O instalador também cria no desktop de `student` atalhos para a interface do
+exame e para o terminal. O ícone do exame é instalado em
+`/home/student/.local/share/icons/redhat.png`.
+
 ## Configuração do Proxmox no usuário student
 
 Somente o usuário `student` recebe a configuração de acesso ao Proxmox. O
@@ -226,16 +231,24 @@ a workstation, abra:
 http://exam.example.com/
 ```
 
-## Execution environment
+## Imagens de container
 
-Durante a instalação, a imagem é baixada da
+Durante a instalação, as imagens são baixadas da
 [GitHub Release Lab Assets v1](https://github.com/alexeiev/labrhel/releases/tag/lab-assets-v1),
-validada por SHA-256 e descompactada em:
+validadas por SHA-256 e descompactadas em:
 
 ```text
 /var/lib/lab-ex294/ee-supported-rhel8.tar
+/var/lib/lab-ex294/ansible-dev-tools-rhel8.tar
 ```
 
-O archive é legível por todos os usuários, mas a imagem é importada somente no
-armazenamento rootless do Podman de `greg` e recebe a tag esperada pelo
-Ansible Navigator.
+Os archives são legíveis por todos os usuários. As imagens são importadas no
+armazenamento rootless do Podman de `greg` e recebem estas tags:
+
+```text
+registry.redhat.io/ansible-automation-platform-24/ee-supported-rhel8:latest
+registry.redhat.io/ansible-automation-platform-25/ansible-dev-tools-rhel8:latest
+```
+
+A primeira tag é a utilizada pelo Ansible Navigator no arquivo
+`confs/ansible/ansible-navigator.yml`.

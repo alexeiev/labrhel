@@ -14,5 +14,6 @@
 !RHCSA_EN.md
 !RHCSA_PT.md
 
-# Imagem do execution environment publicada como asset de GitHub Release
+# Imagens de container publicadas como assets de GitHub Release
 confs/materials/ee-supported-rhel8.tar.gz
+confs/materials/ansible-dev-tools-rhel8.tar.gz
