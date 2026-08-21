@@ -172,9 +172,16 @@ O instalador cria os usuários locais abaixo quando eles ainda não existem:
 As senhas iniciais podem ser substituídas na primeira execução usando as
 variáveis `STUDENT_PASSWORD`, `GREG_PASSWORD` e `DEVOPS_PASSWORD`.
 
-O instalador também cria no desktop de `student` atalhos para a interface do
-exame e para o terminal. O ícone do exame é instalado em
-`/home/student/.local/share/icons/redhat.png`.
+O instalador habilita a
+[extensão Desktop Icons do GNOME Standard](https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/customizing_the_gnome_desktop_environment/assembly_enabling-desktop-icons_customizing-the-gnome-desktop-environment)
+e cria no desktop de `student` atalhos para a interface do exame, o terminal e
+o Visual Studio Code. Os launchers são marcados como confiáveis e executáveis.
+O ícone do exame é instalado em `/home/student/.local/share/icons/redhat.png`.
+
+Em uma workstation que já possua uma sessão gráfica aberta durante a execução
+do instalador, encerre a sessão de `student` e entre novamente para o GNOME
+carregar a extensão. Em uma instalação nova, ela estará habilitada no primeiro
+login.
 
 ## Acesso remoto via RDP
 

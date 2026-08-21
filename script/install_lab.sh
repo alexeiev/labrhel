@@ -71,6 +71,12 @@ ensure_gnome() {
         fi
     fi
 
+    echo "Instalando a extensão de ícones do desktop..."
+    if ! dnf install -y gnome-shell-extension-desktop-icons; then
+        echo "ERRO: Não foi possível instalar a extensão de ícones do GNOME."
+        return 1
+    fi
+
     systemctl set-default graphical.target
     systemctl enable gdm
 }
@@ -150,12 +156,15 @@ EOF
 }
 
 configure_student_desktop() {
+    local desktop_icons_uuid
     local user_home
     local user_group
     local desktop_dir
     local icon_dir
     local desktop_file
+    local installed_desktop_file
 
+    desktop_icons_uuid=desktop-icons@gnome-shell-extensions.gcampax.github.com
     user_home=$(getent passwd student | cut -d: -f6)
     user_group=$(id -gn student)
     desktop_dir=${user_home}/Desktop
@@ -169,16 +178,44 @@ configure_student_desktop() {
 
     for desktop_file in "${DIR_CONFS}/desktop/"*.desktop; do
         [ -e "$desktop_file" ] || continue
+        installed_desktop_file=${desktop_dir}/$(basename "$desktop_file")
         install -m 0755 -o student -g "$user_group" \
-            "$desktop_file" "$desktop_dir/$(basename "$desktop_file")"
+            "$desktop_file" "$installed_desktop_file"
 
         if command -v dbus-run-session >/dev/null 2>&1 && \
            command -v gio >/dev/null 2>&1; then
-            runuser -u student -- dbus-run-session -- \
-                gio set "$desktop_dir/$(basename "$desktop_file")" \
-                metadata::trusted true >/dev/null 2>&1 || true
+            if ! runuser -u student -- dbus-run-session -- \
+                gio set -t string "$installed_desktop_file" \
+                metadata::trusted true >/dev/null 2>&1; then
+                echo "AVISO: Não foi possível marcar $(basename "$desktop_file") como confiável."
+            fi
         fi
     done
+
+    if [ ! -f /usr/share/applications/code.desktop ]; then
+        echo "ERRO: O launcher do Visual Studio Code não foi encontrado."
+        return 1
+    fi
+
+    installed_desktop_file=${desktop_dir}/code.desktop
+    install -m 0755 -o student -g "$user_group" \
+        /usr/share/applications/code.desktop "$installed_desktop_file"
+
+    if command -v dbus-run-session >/dev/null 2>&1 && \
+       command -v gio >/dev/null 2>&1; then
+        if ! runuser -u student -- dbus-run-session -- \
+            gio set -t string "$installed_desktop_file" \
+            metadata::trusted true >/dev/null 2>&1; then
+            echo "AVISO: Não foi possível marcar code.desktop como confiável."
+        fi
+    fi
+
+    echo "Habilitando a extensão de ícones para o usuário student..."
+    if ! runuser -u student -- dbus-run-session -- \
+        gnome-extensions enable "$desktop_icons_uuid" >/dev/null 2>&1; then
+        echo "ERRO: Não foi possível habilitar a extensão de ícones do desktop."
+        return 1
+    fi
 
     restorecon -RF "$desktop_dir" "$icon_dir"
 }
@@ -418,6 +455,7 @@ dnf install -y \
     podman \
     firefox \
     gnome-terminal \
+    gvfs \
     python3-requests \
     policycoreutils-python-utils \
     firewalld \
