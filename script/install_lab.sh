@@ -38,6 +38,8 @@ GREG_PASSWORD=${GREG_PASSWORD:-redhat}
 LAB_PROXMOX_HOST=${PROXMOX_HOST:-SEU_HOST_PROXMOX}
 LAB_PROXMOX_API_USER=${PROXMOX_API_USER:-lab-rhel@pve!secret}
 LAB_PROXMOX_TOKEN_SECRET=${PROXMOX_TOKEN_SECRET:-SEU_SECRET}
+LAB_PROXMOX_VM_TAG=${PROXMOX_VM_TAG:-RHCE-NODES}
+LAB_PROXMOX_VM_SNAPSHOT=${PROXMOX_VM_SNAPSHOT:-Maquina_pronta}
 
 ensure_user() {
     local username=$1
@@ -266,6 +268,16 @@ configure_lab_cli_user() {
     if ! grep -q '^export PROXMOX_TOKEN_SECRET=' "$env_file"; then
         printf "export PROXMOX_TOKEN_SECRET='%s'\n" \
             "$LAB_PROXMOX_TOKEN_SECRET" >> "$env_file"
+    fi
+
+    if ! grep -q '^export PROXMOX_VM_TAG=' "$env_file"; then
+        printf "export PROXMOX_VM_TAG='%s'\n" \
+            "$LAB_PROXMOX_VM_TAG" >> "$env_file"
+    fi
+
+    if ! grep -q '^export PROXMOX_VM_SNAPSHOT=' "$env_file"; then
+        printf "export PROXMOX_VM_SNAPSHOT='%s'\n" \
+            "$LAB_PROXMOX_VM_SNAPSHOT" >> "$env_file"
     fi
 
     if ! grep -q '^# EX294 Lab Helper$' "$bashrc_file" 2>/dev/null; then

@@ -29,12 +29,14 @@ As cinco VMs gerenciadas devem possuir:
 - RHEL 9 instalado;
 - rede acessível pela workstation;
 - hostname e endereço IP correspondentes ao arquivo `confs/hosts`;
-- tag Proxmox exatamente igual a `RHCE-NODES`;
-- snapshot exatamente igual a `Maquina_pronta`;
+- pertencer ao resource pool configurado para o laboratório;
+- tag Proxmox correspondente a `PROXMOX_VM_TAG`;
+- snapshot correspondente a `PROXMOX_VM_SNAPSHOT`;
 - snapshot criado preferencialmente com a VM desligada.
 
 O comando `lab-ex294` descobre automaticamente as VMs pela tag e exige que
-todas possuam o snapshot indicado.
+todas possuam o snapshot indicado. Os valores padrão são `RHCE-NODES` e
+`Maquina_pronta`, mas ambos podem ser alterados no arquivo de configuração.
 
 ## Requisitos da workstation
 
@@ -81,17 +83,30 @@ Execute os comandos abaixo como `root` em um nó do Proxmox. Os exemplos usam:
 
 - usuário: `lab-rhel@pve`;
 - token: `secret`;
-- papel: `LabRHELLab`.
+- papel: `LabRHELLab`;
+- resource pool: `RHCE-LAB`.
 
-Crie o usuário e o papel com somente as permissões utilizadas pelo
-`lab-ex294`:
+Crie o usuário, o papel com somente as permissões utilizadas pelo
+`lab-ex294` e o resource pool do laboratório:
 
 ```bash
 pveum user add lab-rhel@pve -comment "API do laboratório Red Hat"
 
 pveum role add LabRHELLab \
     -privs "VM.Audit VM.PowerMgmt VM.Snapshot.Rollback"
+
+pveum pool add RHCE-LAB -comment "VMs do laboratório Red Hat"
 ```
+
+Adicione somente as VMs gerenciadas ao pool, substituindo os VMIDs do exemplo
+pelos IDs reais:
+
+```bash
+pveum pool modify RHCE-LAB -vms 201,202,203,204,205
+```
+
+Também é possível criar o pool e adicionar seus membros pela interface web em
+`Datacenter > Permissions > Pools`.
 
 Crie o token com separação de privilégios:
 
@@ -102,24 +117,27 @@ pveum user token add lab-rhel@pve secret -privsep 1
 O secret do token é exibido somente no momento da criação. Copie o valor
 apresentado no campo `value` e guarde-o em local seguro.
 
-Conceda o papel ao usuário e ao token somente nas cinco VMs do laboratório.
-Substitua os VMIDs do exemplo pelos IDs reais:
+Conceda o papel ao usuário e ao token somente no pool do laboratório:
 
 ```bash
-for VMID in 201 202 203 204 205; do
-    pveum acl modify "/vms/${VMID}" \
-        -user lab-rhel@pve \
-        -role LabRHELLab
+pveum acl modify /pool/RHCE-LAB \
+    -user lab-rhel@pve \
+    -role LabRHELLab \
+    -propagate 1
 
-    pveum acl modify "/vms/${VMID}" \
-        -token 'lab-rhel@pve!secret' \
-        -role LabRHELLab
-done
+pveum acl modify /pool/RHCE-LAB \
+    -token 'lab-rhel@pve!secret' \
+    -role LabRHELLab \
+    -propagate 1
 ```
 
 Como o token usa `privsep=1`, suas permissões são a interseção das permissões
 do usuário e das permissões atribuídas diretamente ao token. Mais detalhes
 estão no [Proxmox VE Administration Guide](https://pve.proxmox.com/pve-docs/pve-admin-guide.pdf).
+
+Não atribua esse papel no caminho `/`: com propagação, isso permitiria ao
+token gerenciar todas as VMs visíveis no cluster, em vez de somente os membros
+de `RHCE-LAB`.
 
 Valide as permissões:
 
@@ -155,6 +173,8 @@ sudo \
     PROXMOX_HOST='192.0.2.10' \
     PROXMOX_API_USER='lab-rhel@pve!secret' \
     PROXMOX_TOKEN_SECRET='SECRET_GERADO_PELO_PROXMOX' \
+    PROXMOX_VM_TAG='RHCE-NODES' \
+    PROXMOX_VM_SNAPSHOT='Maquina_pronta' \
     bash script/install_lab.sh
 ```
 
@@ -221,6 +241,8 @@ Ele possui permissão `0600` e deve conter:
 export PROXMOX_HOST='192.0.2.10'
 export PROXMOX_API_USER='lab-rhel@pve!secret'
 export PROXMOX_TOKEN_SECRET='SECRET_GERADO_PELO_PROXMOX'
+export PROXMOX_VM_TAG='RHCE-NODES'
+export PROXMOX_VM_SNAPSHOT='Maquina_pronta'
 ```
 
 Se os valores não foram fornecidos na instalação, entre como `student` e edite
@@ -231,8 +253,9 @@ vi ~/.config/lab-ex294/env
 chmod 600 ~/.config/lab-ex294/env
 ```
 
-Não é necessário modificar o script Python. A CLI lê automaticamente as três
-variáveis do ambiente ou do arquivo acima.
+Não é necessário modificar o script Python. A CLI lê automaticamente as cinco
+variáveis do ambiente ou do arquivo acima. Quando ambos estiverem definidos,
+o valor exportado no ambiente tem precedência sobre o arquivo.
 
 ## Utilizar o laboratório
 
@@ -242,7 +265,8 @@ Entre graficamente como `student` e use:
 lab-ex294 start
 ```
 
-O comando valida as VMs, restaura `Maquina_pronta` e inicia os cinco nodes.
+O comando localiza as VMs pela tag configurada, valida o snapshot configurado,
+restaura esse snapshot e inicia os cinco nodes.
 
 Para encerrar o estudo, restaurar novamente o snapshot e deixar as VMs
 desligadas:

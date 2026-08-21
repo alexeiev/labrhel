@@ -63,10 +63,9 @@ def load_config_value(name):
 PROXMOX_HOST = load_config_value("PROXMOX_HOST")
 PROXMOX_API_USER = load_config_value("PROXMOX_API_USER")
 API_TOKEN_SECRET = load_config_value("PROXMOX_TOKEN_SECRET")
+VM_TAG = load_config_value("PROXMOX_VM_TAG")
+SNAPSHOT_NAME = load_config_value("PROXMOX_VM_SNAPSHOT")
 
-
-VM_TAG = "RHCE-NODES"
-SNAPSHOT_NAME = "Maquina_pronta"
 
 VERIFY_SSL = False
 
@@ -91,10 +90,13 @@ class ProxmoxAPI:
             PROXMOX_HOST in invalid_values
             or PROXMOX_API_USER in invalid_values
             or API_TOKEN_SECRET in invalid_values
+            or VM_TAG in invalid_values
+            or SNAPSHOT_NAME in invalid_values
         ):
             print(
-                "ERRO: configure PROXMOX_HOST, PROXMOX_API_USER e "
-                "PROXMOX_TOKEN_SECRET em "
+                "ERRO: configure PROXMOX_HOST, PROXMOX_API_USER, "
+                "PROXMOX_TOKEN_SECRET, PROXMOX_VM_TAG e "
+                "PROXMOX_VM_SNAPSHOT em "
                 "~/.config/lab-ex294/env.",
                 file=sys.stderr,
             )
