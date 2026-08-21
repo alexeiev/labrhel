@@ -459,6 +459,7 @@ dnf install -y \
     python3-requests \
     policycoreutils-python-utils \
     firewalld \
+    terminator \
     sudo
 dnf install -y \
     --enablerepo=ansible-automation-platform-2.4-for-rhel-9-x86_64-rpms \
