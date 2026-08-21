@@ -1,0 +1,7 @@
+#%PAM-1.0
+# O XRDP inicia sessões GNOME; reutilize a pilha PAM do GDM para aplicar os
+# contextos SELinux corretos e desbloquear o GNOME Keyring no login.
+auth       include      gdm-password
+account    include      gdm-password
+password   include      gdm-password
+session    include      gdm-password

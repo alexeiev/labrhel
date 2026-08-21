@@ -30,6 +30,8 @@ DEV_TOOLS_IMAGE_TAR_SHA256=8cbc5edb7de0281336f153c4fd326de62ebf0f755bc0a16294571
 DEV_TOOLS_IMAGE_ID=sha256:d4d4c4fa7e89bf5d9f3ad03343f340b7903c698772f13b81f42801245f993835
 DEV_TOOLS_IMAGE_NAME=registry.redhat.io/ansible-automation-platform-25/ansible-dev-tools-rhel8:latest
 
+EPEL_RELEASE_RPM=https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+
 STUDENT_PASSWORD=${STUDENT_PASSWORD:-student}
 DEVOPS_PASSWORD=${DEVOPS_PASSWORD:-redhat}
 GREG_PASSWORD=${GREG_PASSWORD:-redhat}
@@ -71,6 +73,50 @@ ensure_gnome() {
 
     systemctl set-default graphical.target
     systemctl enable gdm
+}
+
+install_xrdp() {
+    local codeready_repo
+
+    codeready_repo=codeready-builder-for-rhel-9-$(arch)-rpms
+
+    echo "Habilitando o repositório CodeReady Builder..."
+    if ! subscription-manager repos --enable "$codeready_repo"; then
+        echo "ERRO: Não foi possível habilitar ${codeready_repo}."
+        return 1
+    fi
+
+    if rpm -q epel-release >/dev/null 2>&1; then
+        echo "EPEL já está instalado."
+    else
+        echo "Instalando o repositório EPEL 9..."
+        if ! dnf install -y "$EPEL_RELEASE_RPM"; then
+            echo "ERRO: Não foi possível instalar o repositório EPEL 9."
+            return 1
+        fi
+    fi
+
+    echo "Instalando o XRDP, o backend Xorg e a política SELinux..."
+    if ! dnf install -y xrdp xorgxrdp xrdp-selinux; then
+        echo "ERRO: Não foi possível instalar os pacotes do XRDP."
+        return 1
+    fi
+
+    install -m 0644 \
+        "${DIR_CONFS}/xrdp/xrdp-sesman" \
+        /etc/pam.d/xrdp-sesman
+    restorecon -F /etc/pam.d/xrdp-sesman
+
+    echo "Habilitando o serviço XRDP..."
+    if ! systemctl enable --now xrdp; then
+        echo "ERRO: Não foi possível habilitar e iniciar o XRDP."
+        return 1
+    fi
+
+    if ! systemctl is-active --quiet xrdp; then
+        echo "ERRO: O serviço XRDP não está ativo."
+        return 1
+    fi
 }
 
 install_vscode() {
@@ -384,6 +430,10 @@ if ! ensure_gnome; then
     exit 1
 fi
 
+if ! install_xrdp; then
+    exit 1
+fi
+
 if ! install_vscode; then
     exit 1
 fi
@@ -444,10 +494,14 @@ if ! download_container_image \
     exit 1
 fi
 
-echo "Configurando o firewall para permitir tráfego HTTP..."
-systemctl enable --now firewalld
-firewall-cmd --permanent --add-service=http
-firewall-cmd --reload
+echo "Configurando o firewall para permitir tráfego HTTP e RDP..."
+if ! systemctl enable --now firewalld || \
+   ! firewall-cmd --permanent --add-service=http || \
+   ! firewall-cmd --permanent --add-port=3389/tcp || \
+   ! firewall-cmd --reload; then
+    echo "ERRO: Não foi possível configurar o firewall para HTTP e RDP."
+    exit 1
+fi
 
 echo "Configurando repositórios para o laboratório..."
 bash "$BIN_REPO"
@@ -482,6 +536,7 @@ fi
 
 echo "Configuração do laboratório de RHEL 9 concluída com sucesso!"
 echo "Acesse o laboratório em http://exam.example.com/"
+echo "Acesso RDP disponível em ${IP_ADDRESS}:3389 para o usuário student."
 echo "Copie $HOSTS_FILE para os managed nodes."
 
 if [ "$LAB_PROXMOX_HOST" = SEU_HOST_PROXMOX ] || \

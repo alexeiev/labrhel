@@ -2,8 +2,8 @@
 
 Este projeto prepara uma workstation RHEL 9 para estudos práticos dos exames
 Red Hat. O instalador configura a interface gráfica, Ansible, Podman, Apache,
-Visual Studio Code, repositórios RPM locais, materiais dos exercícios e a
-interface web com os simulados RHCSA, RHCE e OpenShift.
+Visual Studio Code, acesso remoto via XRDP, repositórios RPM locais, materiais
+dos exercícios e a interface web com os simulados RHCSA, RHCE e OpenShift.
 
 O laboratório também inclui o comando `lab-ex294`, usado pelo usuário
 `student` para restaurar, iniciar e finalizar as VMs do ambiente no Proxmox.
@@ -42,7 +42,7 @@ todas possuam o snapshot indicado.
 - acesso aos repositórios BaseOS e AppStream;
 - acesso ao repositório do Ansible Automation Platform 2.4;
 - acesso à internet para pacotes, para o repositório oficial do Visual Studio
-  Code e para as imagens disponibilizadas na GitHub Release;
+  Code, para o EPEL 9 e para as imagens disponibilizadas na GitHub Release;
 - conectividade HTTPS com a porta `8006` do Proxmox;
 - endereço IP estável;
 - acesso de `root` ou `sudo`;
@@ -57,6 +57,9 @@ Uma instalação minimal é suportada. O script detecta `gnome-shell` e `gdm` e,
 quando necessário, instala o grupo `Server with GUI`, habilita o GDM e define
 o boot gráfico como padrão. O Visual Studio Code stable é instalado pelo
 [repositório RPM oficial da Microsoft](https://code.visualstudio.com/docs/setup/linux).
+O instalador também habilita o CodeReady Builder e instala o EPEL 9 para obter
+os pacotes do XRDP, seguindo o procedimento de instalação do
+[EPEL para RHEL 9](https://docs.fedoraproject.org/en-US/epel/getting-started/).
 
 ## Preparar as VMs gerenciadas
 
@@ -172,6 +175,29 @@ variáveis `STUDENT_PASSWORD`, `GREG_PASSWORD` e `DEVOPS_PASSWORD`.
 O instalador também cria no desktop de `student` atalhos para a interface do
 exame e para o terminal. O ícone do exame é instalado em
 `/home/student/.local/share/icons/redhat.png`.
+
+## Acesso remoto via RDP
+
+O instalador instala `xrdp`, `xorgxrdp` e `xrdp-selinux`, habilita o serviço
+`xrdp` no boot e libera `3389/tcp` no `firewalld`. O backend Xorg cria uma
+sessão GNOME independente para a conexão remota. Esses componentes seguem as
+[recomendações do projeto XRDP](https://github.com/neutrinolabs/xrdp).
+
+Use um cliente RDP para acessar o endereço IP da workstation na porta `3389`:
+
+```text
+Servidor: IP_DA_WORKSTATION:3389
+Usuário: student
+Senha inicial: student
+Sessão: Xorg
+```
+
+Se `STUDENT_PASSWORD` foi fornecida durante a instalação, utilize esse valor.
+Evite manter o mesmo usuário conectado simultaneamente no console gráfico e
+via XRDP; finalize a sessão local de `student` antes de iniciar a conexão RDP.
+
+> **Segurança:** a conta `student` possui `sudo` sem senha neste laboratório.
+> Troque a senha inicial e exponha a porta `3389` somente em uma rede confiável.
 
 ## Configuração do Proxmox no usuário student
 
